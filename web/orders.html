@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn Hàng Của Tôi - UTTMart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8f9fb, #eef3f7);
+            min-height: 100vh;
+        }
+        .topbar {
+            background: #ffffff;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+        .order-card {
+            border: 0;
+            border-radius: 14px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+        }
+        .pill-active {
+            background: #e9f9ef;
+            color: #107c41;
+            border: 1px solid #caefd8;
+        }
+        .pill-canceled {
+            background: #ffecec;
+            color: #b42318;
+            border: 1px solid #ffd1d1;
+        }
+        .btn-main {
+            background: #1a1a1a;
+            border: none;
+            color: #fff;
+        }
+        .btn-main:hover {
+            background: #ff3300;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="topbar py-3 mb-4">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a href="/" class="text-decoration-none fw-bold fs-4 text-dark">UTT<span style="color:#ff3300">MART</span></a>
+            <div class="d-flex align-items-center gap-2">
+                <span id="userName" class="fw-semibold text-secondary"></span>
+                <button class="btn btn-outline-danger btn-sm" onclick="logout()">Thoát</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container pb-5">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h3 class="fw-bold mb-0">Đơn Hàng Của Tôi</h3>
+            <button class="btn btn-main" onclick="loadMyOrders()"><i class="fa fa-rotate me-2"></i>Tải lại</button>
+        </div>
+
+        <div id="ordersContainer" class="vstack gap-3"></div>
+    </main>
+
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Chi Tiết Đơn Hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="orderDetailBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const ORDER_API_BASE = '/api/orders';
+        const currency = (val) => Number(val || 0).toLocaleString('vi-VN') + ' ₫';
+
+        let currentUserId = 0;
+        let allOrders = [];
+
+        function logout() {
+            localStorage.removeItem('polymart_user');
+            localStorage.removeItem('fashion_user_id');
+            window.location.href = '/login.html';
+        }
+
+        async function jsonFetch(url, method = 'GET', payload = null) {
+            const options = { method, headers: { 'Accept': 'application/json' } };
+            if (payload) {
+                options.headers['Content-Type'] = 'application/json';
+                options.body = JSON.stringify(payload);
+            }
+
+            const res = await fetch(url, options);
+            const text = await res.text();
+            let data = null;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                throw new Error('Phản hồi không phải JSON hợp lệ');
+            }
+
+            if (!res.ok || data.success !== true) {
+                throw new Error(data.message || ('HTTP ' + res.status));
+            }
+
+            return data.data || [];
+        }
+
+        function renderOrders(orders) {
+            const box = document.getElementById('ordersContainer');
+            if (!Array.isArray(orders) || orders.length === 0) {
+                box.innerHTML = '<div class="text-center py-5 text-muted bg-white rounded-4 border">Bạn chưa có đơn hàng nào.</div>';
+                return;
+            }
+
+            box.innerHTML = orders.map(order => {
+                const active = order.active === true;
+                const statusText = active ? 'Đang hoạt động' : 'Đã hủy';
+                const statusClass = active ? 'pill-active' : 'pill-canceled';
+
+                return `
+                    <div class="card order-card">
+                        <div class="card-body p-4">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                <div>
+                                    <h5 class="mb-1 fw-bold">Đơn #${order.order_id}</h5>
+                                    <div class="text-muted small">Ngày tạo: ${order.order_date || '-'}</div>
+                                </div>
+                                <span class="px-3 py-1 rounded-pill small ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                                <div class="small text-muted">Số dòng sản phẩm: <strong>${Number(order.item_count || 0)}</strong></div>
+                                <div class="fs-5 text-danger fw-bold">${currency(order.total_amount)}</div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-outline-dark btn-sm" onclick="viewDetail(${order.order_id})">Chi tiết</button>
+                                ${active ? `<button class="btn btn-outline-warning btn-sm" onclick="cancelOrder(${order.order_id})">Hủy đơn</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadMyOrders() {
+            const box = document.getElementById('ordersContainer');
+            box.innerHTML = '<div class="text-center py-5 text-muted bg-white rounded-4 border">Đang tải đơn hàng...</div>';
+
+            try {
+                const orders = await jsonFetch(`${ORDER_API_BASE}/list.php?user_id=${currentUserId}`);
+                allOrders = Array.isArray(orders) ? orders : [];
+                renderOrders(allOrders);
+            } catch (err) {
+                box.innerHTML = `<div class="text-center py-5 text-danger bg-white rounded-4 border">${err.message}</div>`;
+            }
+        }
+
+        async function viewDetail(orderId) {
+            try {
+                const data = await jsonFetch(`${ORDER_API_BASE}/detail.php?user_id=${currentUserId}&order_id=${orderId}`);
+                const order = data;
+                const html = `
+                    <div class="mb-3">
+                        <div><strong>Mã đơn:</strong> #${order.order_id}</div>
+                        <div><strong>Ngày:</strong> ${order.order_date || '-'}</div>
+                        <div><strong>Trạng thái:</strong> ${order.active ? 'Đang hoạt động' : 'Đã hủy'}</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Detail ID</th>
+                                    <th>Sản phẩm</th>
+                                    <th>Số lượng</th>
+                                    <th>Đơn giá</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(order.items || []).map(it => `
+                                    <tr>
+                                        <td>${it.detail_id}</td>
+                                        <td>#${it.product_id || '-'}</td>
+                                        <td>${it.quantity}</td>
+                                        <td>${currency(it.unit_price)}</td>
+                                        <td class="text-danger fw-semibold">${currency(it.line_total)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end fw-bold">Tổng cộng: <span class="text-danger">${currency(order.total_amount)}</span></div>
+                `;
+
+                document.getElementById('orderDetailBody').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('detailModal')).show();
+            } catch (err) {
+                alert('Không lấy được chi tiết đơn: ' + err.message);
+            }
+        }
+
+        async function cancelOrder(orderId) {
+            if (!confirm('Bạn chắc chắn muốn hủy đơn này?')) {
+                return;
+            }
+
+            try {
+                await jsonFetch(`${ORDER_API_BASE}/delete.php`, 'POST', {
+                    user_id: currentUserId,
+                    order_id: orderId,
+                });
+
+                alert('Hủy đơn thành công.');
+                await loadMyOrders();
+            } catch (err) {
+                alert('Hủy đơn thất bại: ' + err.message);
+            }
+        }
+
+        function boot() {
+            const raw = localStorage.getItem('polymart_user');
+            if (!raw) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            let user = null;
+            try {
+                user = JSON.parse(raw);
+            } catch (e) {
+                logout();
+                return;
+            }
+
+            currentUserId = Number(user.ID || localStorage.getItem('fashion_user_id') || 0);
+            if (!Number.isInteger(currentUserId) || currentUserId <= 0) {
+                logout();
+                return;
+            }
+
+            document.getElementById('userName').textContent = user.HOTEN ? ('Xin chào, ' + user.HOTEN) : 'Đã đăng nhập';
+            loadMyOrders();
+        }
+
+        boot();
+    </script>
+</body>
+</html>

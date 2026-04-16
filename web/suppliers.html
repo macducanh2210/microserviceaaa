@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTTMart Suppliers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --card: #ffffff;
+            --line: #e5eaf2;
+            --text: #1e293b;
+            --muted: #65758b;
+            --deep: #1b2440;
+            --deep-2: #222f56;
+            --primary: #4f46e5;
+            --ok: #0f9d58;
+            --danger: #dc2626;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #eef2f9 0%, #f8fafc 100%);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: linear-gradient(165deg, var(--deep) 0%, var(--deep-2) 100%);
+            color: #d9e2f2;
+            padding: 20px 16px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .brand i { font-size: 1.45rem; color: #7a8cff; }
+
+        .role-badge {
+            margin-top: 8px;
+            margin-bottom: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 999px;
+            padding: 7px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.85rem;
+        }
+
+        .menu-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #8ca1c5;
+            margin: 12px 10px 8px;
+        }
+
+        .menu-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #d9e2f2;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            overflow: hidden;
+            transform: translateX(0);
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: #8aa3ff;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            border-color: rgba(122, 140, 255, 0.45);
+            background: rgba(122, 140, 255, 0.18);
+            color: #fff;
+            transform: translateX(3px);
+        }
+
+        .menu-item:hover::before,
+        .menu-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .menu-item span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .menu-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .content { padding: 14px; }
+
+        .topbar {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .search-wrap {
+            width: 100%;
+            max-width: 460px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 11px;
+            color: var(--muted);
+        }
+
+        .search-wrap input {
+            border: 0;
+            outline: none;
+            width: 100%;
+            font-size: 0.92rem;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-soft {
+            border: 1px solid var(--line);
+            background: white;
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #d4dffb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #1f2a48;
+        }
+
+        .page-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .page-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .page-subtitle {
+            color: var(--muted);
+            margin-bottom: 16px;
+            font-size: 0.92rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #344054;
+        }
+
+        .field input {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px 12px;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        .field input:focus {
+            border-color: #8aa3ff;
+            box-shadow: 0 0 0 4px rgba(122, 140, 255, 0.12);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .btn-primary-soft {
+            background: var(--primary);
+            color: #fff;
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+        }
+
+        .btn-danger-soft {
+            background: #fee2e2;
+            color: var(--danger);
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+        }
+
+        .table-wrap {
+            overflow: auto;
+        }
+
+        .status-pill {
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .status-active {
+            color: var(--ok);
+            background: #e8f8ef;
+        }
+
+        .status-inactive {
+            color: var(--danger);
+            background: #ffebee;
+        }
+
+        .small-muted {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        @media (max-width: 1120px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { position: static; height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fa-solid fa-truck-ramp-box"></i><span>UTTMart</span></div>
+            <div class="role-badge" id="roleBadge"><i class="fa-solid fa-shield-halved"></i><span>Dang xac thuc...</span></div>
+
+            <div class="menu-label">MENU</div>
+            <a class="menu-item" href="/manage.html">
+                <span><i class="fa-solid fa-table-columns"></i>Dashboard</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item active" href="/suppliers.html">
+                <span><i class="fa-solid fa-truck-field"></i>Suppliers</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/products.html">
+                <span><i class="fa-solid fa-tags"></i>Products</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/employees.html">
+                <span><i class="fa-solid fa-user-gear"></i>Employees</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/admin-import.html">
+                <span><i class="fa-solid fa-file-import"></i>Import</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/admin-orders.html">
+                <span><i class="fa-solid fa-box-open"></i>Orders</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/">
+                <span><i class="fa-solid fa-store"></i>Shop</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/attendance.html">
+                <span><i class="fa-solid fa-user-check"></i>Cham cong</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/expenses.html">
+                <span><i class="fa-solid fa-wallet"></i>Chi tieu</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+
+            <div class="menu-label">SUPPORT</div>
+            <button class="menu-item" id="logoutBtn">
+                <span><i class="fa-solid fa-right-from-bracket"></i>Logout</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </button>
+        </aside>
+
+        <main class="content">
+            <div class="topbar">
+                <div class="search-wrap">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="searchInput" type="text" placeholder="Tim nha cung cap...">
+                </div>
+                <div class="top-actions">
+                    <button class="btn-soft" id="refreshBtn"><i class="fa-solid fa-rotate"></i></button>
+                    <div class="small-muted" id="welcomeText">Dang kiem tra quyen...</div>
+                    <div class="avatar" id="avatarText">U</div>
+                </div>
+            </div>
+
+            <section class="page-card mb-3">
+                <div class="page-title">Quan ly nha cung cap</div>
+                <div class="page-subtitle">Them, sua, xoa mem nha cung cap trong inventory-service.</div>
+
+                <form id="supplierForm">
+                    <input type="hidden" id="supplierId" value="">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="supplierName">Ten nha cung cap</label>
+                            <input id="supplierName" type="text" placeholder="Cong ty ABC" required>
+                        </div>
+                        <div class="field">
+                            <label for="contactName">Nguoi lien he</label>
+                            <input id="contactName" type="text" placeholder="Nguyen Van A">
+                        </div>
+                        <div class="field">
+                            <label for="phone">So dien thoai</label>
+                            <input id="phone" type="text" placeholder="0900000000">
+                        </div>
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input id="email" type="email" placeholder="supplier@example.com">
+                        </div>
+                    </div>
+                    <div class="field mb-3">
+                        <label for="address">Dia chi</label>
+                        <input id="address" type="text" placeholder="So nha, duong, quan, tinh">
+                    </div>
+                    <div class="actions">
+                        <button class="btn-primary-soft" type="submit" id="saveBtn">Luu nha cung cap</button>
+                        <button class="btn-danger-soft" type="button" id="resetBtn">Lam moi form</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="page-card">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                    <div>
+                        <div class="page-title mb-1">Danh sach nha cung cap</div>
+                        <div class="small-muted" id="summaryText">Dang tai du lieu...</div>
+                    </div>
+                    <button class="btn-soft" id="toggleInactiveBtn" type="button">Hien thi da xoa</button>
+                </div>
+                <div class="table-wrap">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Ten NCC</th>
+                                <th>Nguoi lien he</th>
+                                <th>So dien thoai</th>
+                                <th>Email</th>
+                                <th>Dia chi</th>
+                                <th>Trang thai</th>
+                                <th>Thao tac</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliersBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const SUPPLIER_API = '/api/inventory/suppliers';
+        let suppliers = [];
+        let includeInactive = false;
+        let editingSupplierId = null;
+
+        function logout() {
+            localStorage.removeItem('polymart_user');
+            localStorage.removeItem('fashion_user_id');
+            window.location.href = '/login.html';
+        }
+
+        async function fetchJson(url, options = {}) {
+            const res = await fetch(url, {
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+                ...options,
+            });
+            const text = await res.text();
+            let json = null;
+            try {
+                json = JSON.parse(text);
+            } catch (e) {
+                throw new Error('Invalid JSON response');
+            }
+            if (!res.ok || json.success !== true) {
+                throw new Error(json.message || ('HTTP ' + res.status));
+            }
+            return json.data;
+        }
+
+        function formatStatus(active) {
+            return active ? '<span class="status-pill status-active">Hoat dong</span>' : '<span class="status-pill status-inactive">Da khoa</span>';
+        }
+
+        function renderSuppliers() {
+            const keyword = String(document.getElementById('searchInput').value || '').trim().toLowerCase();
+            const filtered = suppliers.filter((supplier) => {
+                if (!keyword) return true;
+                const haystack = [supplier.id, supplier.supplier_name, supplier.contact_name, supplier.phone, supplier.email, supplier.address].join(' ').toLowerCase();
+                return haystack.includes(keyword);
+            });
+
+            const body = document.getElementById('suppliersBody');
+            if (!filtered.length) {
+                body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Khong co nha cung cap phu hop</td></tr>';
+            } else {
+                body.innerHTML = filtered.map((supplier) => `
+                    <tr>
+                        <td class="fw-semibold">${supplier.id}</td>
+                        <td>${supplier.supplier_name || '-'}</td>
+                        <td>${supplier.contact_name || '-'}</td>
+                        <td>${supplier.phone || '-'}</td>
+                        <td>${supplier.email || '-'}</td>
+                        <td>${supplier.address || '-'}</td>
+                        <td>${formatStatus(Boolean(supplier.is_active))}</td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-edit="${supplier.id}">Sua</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-delete="${supplier.id}">Xoa</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('summaryText').textContent = `${filtered.length} / ${suppliers.length} nha cung cap`;
+        }
+
+        function resetForm() {
+            editingSupplierId = null;
+            document.getElementById('supplierId').value = '';
+            document.getElementById('supplierName').value = '';
+            document.getElementById('contactName').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('saveBtn').textContent = 'Luu nha cung cap';
+        }
+
+        async function loadSuppliers() {
+            const url = `${SUPPLIER_API}/get-all.php?include_inactive=${includeInactive ? '1' : '0'}`;
+            suppliers = await fetchJson(url);
+            renderSuppliers();
+        }
+
+        async function submitSupplier(event) {
+            event.preventDefault();
+            const payload = {
+                supplier_name: document.getElementById('supplierName').value.trim(),
+                contact_name: document.getElementById('contactName').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                address: document.getElementById('address').value.trim(),
+            };
+
+            if (!payload.supplier_name) {
+                alert('Vui long nhap ten nha cung cap.');
+                return;
+            }
+
+            let endpoint = `${SUPPLIER_API}/add.php`;
+            if (editingSupplierId !== null) {
+                endpoint = `${SUPPLIER_API}/update.php`;
+                payload.supplier_id = editingSupplierId;
+            }
+
+            await fetchJson(endpoint, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            resetForm();
+            await loadSuppliers();
+        }
+
+        async function handleTableAction(target) {
+            const editId = target.getAttribute('data-edit');
+            const deleteId = target.getAttribute('data-delete');
+
+            if (editId) {
+                const supplier = suppliers.find((item) => String(item.id) === String(editId));
+                if (!supplier) return;
+                editingSupplierId = supplier.id;
+                document.getElementById('supplierId').value = supplier.id;
+                document.getElementById('supplierName').value = supplier.supplier_name || '';
+                document.getElementById('contactName').value = supplier.contact_name || '';
+                document.getElementById('phone').value = supplier.phone || '';
+                document.getElementById('email').value = supplier.email || '';
+                document.getElementById('address').value = supplier.address || '';
+                document.getElementById('saveBtn').textContent = 'Cap nhat nha cung cap';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            if (deleteId) {
+                if (!confirm('Xoa mem nha cung cap nay?')) return;
+                await fetchJson(`${SUPPLIER_API}/delete.php`, {
+                    method: 'POST',
+                    body: JSON.stringify({ supplier_id: Number(deleteId) }),
+                });
+                if (editingSupplierId === Number(deleteId)) resetForm();
+                await loadSuppliers();
+            }
+        }
+
+        (function boot() {
+            const userRaw = localStorage.getItem('polymart_user');
+            if (!userRaw) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            let user = null;
+            try {
+                user = JSON.parse(userRaw);
+            } catch (e) {
+                logout();
+                return;
+            }
+
+            const role = String(user.ROLE || '').toLowerCase();
+            if (role !== 'admin' && role !== 'staff') {
+                window.location.href = '/';
+                return;
+            }
+
+            const roleLabel = role === 'admin' ? 'Quan tri vien' : 'Nhan vien';
+            document.getElementById('welcomeText').textContent = `${user.HOTEN || 'Nguoi dung'} • ${roleLabel}`;
+            document.getElementById('roleBadge').innerHTML = `<i class="fa-solid fa-shield-halved"></i><span>${roleLabel}</span>`;
+            document.getElementById('avatarText').textContent = String(user.HOTEN || 'U').trim().charAt(0).toUpperCase();
+            if (role !== 'admin') {
+                document.querySelectorAll('a.menu-item[href="/employees.html"]').forEach((el) => {
+                    el.style.display = 'none';
+                });
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('refreshBtn').addEventListener('click', function () {
+                loadSuppliers().catch((err) => alert('Khong tai duoc danh sach nha cung cap: ' + err.message));
+            });
+            document.getElementById('searchInput').addEventListener('input', renderSuppliers);
+            document.getElementById('supplierForm').addEventListener('submit', function (event) {
+                submitSupplier(event).catch((err) => alert('Khong luu duoc nha cung cap: ' + err.message));
+            });
+            document.getElementById('resetBtn').addEventListener('click', resetForm);
+            document.getElementById('toggleInactiveBtn').addEventListener('click', function () {
+                includeInactive = !includeInactive;
+                this.textContent = includeInactive ? 'An nha cung cap da xoa' : 'Hien thi da xoa';
+                loadSuppliers().catch((err) => alert('Khong tai duoc danh sach nha cung cap: ' + err.message));
+            });
+            document.getElementById('suppliersBody').addEventListener('click', function (event) {
+                const target = event.target.closest('button[data-edit], button[data-delete]');
+                if (!target) return;
+                handleTableAction(target).catch((err) => alert('Thao tac that bai: ' + err.message));
+            });
+
+            loadSuppliers().catch((err) => alert('Khong tai duoc danh sach nha cung cap: ' + err.message));
+        })();
+    </script>
+</body>
+</html>

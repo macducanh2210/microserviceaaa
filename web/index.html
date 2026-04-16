@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTTMart - Thời Trang Cao Cấp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #fcfcfc; }
+        .navbar { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .product-card { border: none; transition: 0.3s; margin-bottom: 20px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .product-img { width: 100%; height: 280px; object-fit: cover; cursor: pointer; transition: 0.3s; }
+        .product-img:hover { opacity: 0.8; }
+        .cart-badge { background: #ff3300; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; position: absolute; transform: translate(-10px, -10px); }
+        .btn-black { background: #1a1a1a; color: white; border-radius: 0; }
+        .btn-black:hover { background: #ff3300; color: white; }
+        .qty-btn { width: 35px; height: 35px; border: 1px solid #ccc; background: white; font-weight: bold; }
+        .qty-input { width: 50px; height: 35px; text-align: center; border: 1px solid #ccc; border-left: none; border-right: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="#">UTT<span style="color:#ff3300">MART</span></a>
+            
+            <div class="d-flex mx-auto w-50">
+                <input type="text" id="searchInput" class="form-control rounded-pill" placeholder="Tìm kiếm áo thun, quần jean...">
+                <button class="btn btn-dark rounded-pill ms-2" onclick="loadProducts()"><i class="fa fa-search"></i></button>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <div id="userMenu" class="d-flex align-items-center gap-2">
+                    <button class="btn btn-outline-dark btn-sm" onclick="openLoginPage()">Đăng Nhập</button>
+                </div>
+                <div style="position: relative; cursor: pointer;" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+                    <i class="fa-solid fa-bag-shopping fs-4"></i>
+                    <span class="cart-badge" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="text-center mb-4 fw-bold">SẢN PHẨM MỚI</h2>
+        <div class="row" id="productList">
+            <div class="col-6 col-md-3 d-none" id="productCardTemplate">
+                <div class="product-card">
+                    <img src="" class="product-img js-product-img" alt="Sản phẩm">
+                    <div class="p-3 text-center">
+                        <h6 class="text-truncate js-product-name" title="">Tên sản phẩm</h6>
+                        <p class="text-danger fw-bold mb-3 js-product-price">0 ₫</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-dark btn-sm w-50 js-detail-btn">Chi Tiết</button>
+                            <button class="btn btn-dark btn-sm w-50 js-buy-btn">Mua</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="cartOffcanvas">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-bold">Giỏ Hàng Của Bạn</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column">
+            <div id="cartItems" class="flex-grow-1 overflow-auto"></div>
+            <div class="border-top pt-3 mt-3">
+                <h5 class="d-flex justify-content-between fw-bold">
+                    Tổng tiền: <span id="cartTotal" class="text-danger">0 đ</span>
+                </h5>
+                <button class="btn btn-black w-100 py-2 mt-2 fw-bold" onclick="checkout()">THANH TOÁN</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="productDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-0 px-4 pb-4">
+                    <div class="row">
+                        <div class="col-md-6 text-center mb-3 mb-md-0">
+                            <img id="detailImg" src="" class="img-fluid rounded" style="max-height: 450px; width: 100%; object-fit: cover;">
+                        </div>
+                        <div class="col-md-6 d-flex flex-column justify-content-center">
+                            <h3 id="detailName" class="fw-bold mb-2">Tên sản phẩm</h3>
+                            <h4 id="detailPrice" class="text-danger fw-bold mb-3">0 đ</h4>
+                            <p class="text-muted small mb-2">Kho hiện còn: <span id="detailStock" class="fw-bold text-success">0</span> chiếc</p>
+                            <p class="text-muted small mb-4">Sản phẩm mang lại sự thoải mái tối đa, phù hợp để diện đi học, đi chơi hay dạo phố.</p>
+                            <div class="mb-4 d-flex align-items-center">
+                                <span class="fw-bold me-3">Số lượng:</span>
+                                <div class="d-flex">
+                                    <button class="qty-btn" onclick="changeDetailQty(-1)">-</button>
+                                    <input type="number" id="detailQty" class="qty-input" value="1" readonly>
+                                    <button class="qty-btn" onclick="changeDetailQty(1)">+</button>
+                                </div>
+                            </div>
+                            <button id="btnDetailAddCart" class="btn btn-black w-100 py-3 fw-bold fs-5">THÊM VÀO GIỎ</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="orderHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa fa-history me-2"></i>Lịch Sử Mua Hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light" id="orderHistoryBody">
+                    <div class="text-center text-muted py-5">Đang tải lịch sử đơn hàng...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="main.js"></script>
+    <script>
+        const ORDER_API_BASE = '/api/orders';
+        const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500';
+        
+        let cart = []; 
+        let currentProductDetail = null;
+
+        async function loadProducts() {
+            if (window.ProductHome && typeof window.ProductHome.loadProducts === 'function') {
+                await window.ProductHome.loadProducts();
+                return;
+            }
+
+            document.getElementById('productList').innerHTML = '<p class="text-danger text-center">Không tải được script sản phẩm.</p>';
+        }
+
+        function openDetailModal(productId, detailId, name, price, img, stock) {
+            currentProductDetail = {
+                product_id: Number(productId),
+                detail_id: Number(detailId) > 0 ? Number(detailId) : null,
+                name,
+                price,
+                img,
+                stock
+            };
+            const detailImg = document.getElementById('detailImg');
+            detailImg.src = img;
+            detailImg.onerror = function () {
+                this.onerror = null;
+                this.src = FALLBACK_IMAGE;
+            };
+            document.getElementById('detailName').innerText = name;
+            document.getElementById('detailPrice').innerText = price.toLocaleString('vi-VN') + ' ₫';
+            document.getElementById('detailStock').innerText = stock;
+            document.getElementById('detailQty').value = 1; 
+            new bootstrap.Modal(document.getElementById('productDetailModal')).show();
+        }
+
+        function changeDetailQty(change) {
+            let input = document.getElementById('detailQty');
+            let newQty = parseInt(input.value) + change;
+            let maxQty = currentProductDetail.stock;
+            
+            if(newQty >= 1 && newQty <= maxQty) {
+                input.value = newQty;
+            } else if (newQty > maxQty) {
+                alert("Kho chỉ còn tối đa " + maxQty + " chiếc!");
+            }
+        }
+
+        document.getElementById('btnDetailAddCart').addEventListener('click', function() {
+            let qty = parseInt(document.getElementById('detailQty').value);
+            addToCart(
+                currentProductDetail.product_id,
+                currentProductDetail.detail_id,
+                currentProductDetail.name,
+                currentProductDetail.price,
+                currentProductDetail.img,
+                qty,
+                currentProductDetail.stock
+            );
+            bootstrap.Modal.getInstance(document.getElementById('productDetailModal')).hide();
+            setTimeout(() => { new bootstrap.Offcanvas(document.getElementById('cartOffcanvas')).show(); }, 300);
+        });
+
+        function addToCart(productId, detailId, name, price, img, quantity, stock) {
+            productId = Number(productId);
+            detailId = Number(detailId);
+            quantity = Number(quantity);
+            stock = Number(stock);
+
+            if (!Number.isInteger(productId) || productId <= 0 || !Number.isInteger(quantity) || quantity <= 0) {
+                alert('Sản phẩm không hợp lệ, vui lòng tải lại trang.');
+                return;
+            }
+
+            let item = cart.find(i => i.product_id === productId);
+            if(item) {
+                if(item.quantity + quantity > stock) {
+                    alert("Không thể thêm! Kho chỉ còn " + stock + " chiếc.");
+                    return;
+                }
+                item.quantity += quantity; 
+            } else { 
+                cart.push({
+                    product_id: productId,
+                    detail_id: Number.isInteger(detailId) && detailId > 0 ? detailId : null,
+                    name,
+                    price,
+                    img,
+                    quantity,
+                    stock
+                }); 
+            }
+            renderCart();
+        }
+
+        function updateQuantity(productId, change) {
+            productId = Number(productId);
+            let item = cart.find(i => i.product_id === productId);
+            if(item) {
+                let newQty = item.quantity + change;
+                if(newQty > item.stock) {
+                    alert("Kho chỉ còn " + item.stock + " chiếc.");
+                    return;
+                }
+                item.quantity = newQty;
+                if(item.quantity <= 0) cart = cart.filter(i => i.product_id !== productId); 
+                renderCart();
+            }
+        }
+
+        function removeFromCart(productId) {
+            productId = Number(productId);
+            cart = cart.filter(i => i.product_id !== productId);
+            renderCart();
+        }
+
+        function renderCart() {
+            let html = '', total = 0, count = 0;
+            cart.forEach(item => {
+                total += item.price * item.quantity;
+                count += item.quantity;
+                html += `
+                    <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                        <img src="${item.img}" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'" style="width: 60px; height: 80px; object-fit: cover;" class="rounded me-3">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1" style="font-size: 0.9rem;">${item.name}</h6>
+                            <p class="text-danger mb-1 fw-bold">${item.price.toLocaleString('vi-VN')} ₫</p>
+                            <div class="d-flex align-items-center">
+                                <button class="btn btn-sm btn-light px-2 py-0 border" onclick="updateQuantity(${item.product_id}, -1)">-</button>
+                                <span class="mx-2 small text-center" style="width:20px;">${item.quantity}</span>
+                                <button class="btn btn-sm btn-light px-2 py-0 border" onclick="updateQuantity(${item.product_id}, 1)">+</button>
+                            </div>
+                        </div>
+                        <button class="btn text-danger px-2" onclick="removeFromCart(${item.product_id})"><i class="fa fa-trash"></i></button>
+                    </div>
+                `;
+            });
+            document.getElementById('cartItems').innerHTML = html || '<p class="text-center text-muted mt-5">Giỏ hàng trống</p>';
+            document.getElementById('cartTotal').innerText = total.toLocaleString('vi-VN') + ' ₫';
+            document.getElementById('cartCount').innerText = count;
+        }
+
+        function checkAuth() {
+            const user = JSON.parse(localStorage.getItem('polymart_user'));
+            const userMenu = document.getElementById('userMenu');
+            if(user) {
+                const role = String(user.ROLE || 'customer').toLowerCase();
+                const managementBtn = (role === 'admin' || role === 'staff')
+                    ? `<button class="btn btn-sm btn-outline-dark mx-2" onclick="openManagementPage()">Quản Lý</button>`
+                    : '';
+                userMenu.innerHTML = `
+                    <span class="fw-bold fs-6">Chào, ${user.HOTEN}</span>
+                    ${managementBtn}
+                    <button class="btn btn-sm btn-dark mx-2" onclick="openOrdersPage()">Đơn Hàng</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="logout()">Thoát</button>
+                `;
+            } else {
+                userMenu.innerHTML = `<button class="btn btn-dark btn-sm" onclick="openLoginPage()">Đăng Nhập</button>`;
+            }
+        }
+
+        function openLoginPage() {
+            window.location.href = '/login.html';
+        }
+
+        function openOrdersPage() {
+            window.location.href = '/orders.html';
+        }
+
+        function openManagementPage() {
+            window.location.href = '/manage.html';
+        }
+
+        function logout() { localStorage.removeItem('polymart_user'); checkAuth(); }
+
+        async function checkout() {
+            const user = JSON.parse(localStorage.getItem('polymart_user'));
+            if(!user) return openLoginPage();
+            if(cart.length === 0) return alert('Giỏ hàng trống!');
+
+            const userId = Number(user.ID ?? user.user_id ?? user.id ?? localStorage.getItem('fashion_user_id'));
+            if (!Number.isInteger(userId) || userId <= 0) {
+                localStorage.removeItem('polymart_user');
+                localStorage.removeItem('fashion_user_id');
+                alert('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+                return openLoginPage();
+            }
+
+            try {
+                const payload = {
+                    user_id: userId,
+                    items: cart
+                        .map(item => {
+                            const productId = Number(item.product_id);
+                            const detailId = Number(item.detail_id);
+                            const quantity = Number(item.quantity);
+                            const mapped = { quantity };
+
+                            if (Number.isInteger(productId) && productId > 0) {
+                                mapped.product_id = productId;
+                            }
+                            if (Number.isInteger(detailId) && detailId > 0) {
+                                mapped.detail_id = detailId;
+                            }
+
+                            return mapped;
+                        })
+                        .filter(item => (Number.isInteger(item.product_id) && item.product_id > 0) || (Number.isInteger(item.detail_id) && item.detail_id > 0))
+                        .filter(item => Number.isInteger(item.quantity) && item.quantity > 0)
+                };
+
+                if (payload.items.length === 0) {
+                    return alert('Giỏ hàng không hợp lệ, vui lòng thêm lại sản phẩm.');
+                }
+
+                const idemSeed = `${userId}|${JSON.stringify(payload.items)}`;
+                let idemHash = 0;
+                for (let i = 0; i < idemSeed.length; i++) {
+                    idemHash = ((idemHash << 5) - idemHash) + idemSeed.charCodeAt(i);
+                    idemHash |= 0;
+                }
+                const idempotencyKey = `checkout-${userId}-${Math.abs(idemHash)}`;
+
+                const res = await fetch(`${ORDER_API_BASE}/create.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Idempotency-Key': idempotencyKey
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const text = await res.text();
+                try {
+                    const data = JSON.parse(text);
+                    if(data.success === true) {
+                        alert(data.message);
+                        cart = []; 
+                        renderCart();
+                        bootstrap.Offcanvas.getInstance(document.getElementById('cartOffcanvas')).hide();
+                        loadProducts();
+                    } else {
+                        const detail = data.error ? `\nChi tiết: ${data.error}` : '';
+                        alert((data.message || 'Không thể tạo đơn hàng.') + detail);
+                    }
+                } catch(parseErr) {
+                    console.error("Lỗi parse JSON:", text);
+                    alert("Lỗi từ CSDL (Chi tiết trong F12 Console)");
+                }
+            } catch(e) { 
+                alert("Mất kết nối với Server!"); 
+            }
+        }
+
+        async function showOrderHistory() {
+            const user = JSON.parse(localStorage.getItem('polymart_user'));
+            if(!user) return;
+
+            const userId = Number(user.ID ?? user.user_id ?? user.id ?? localStorage.getItem('fashion_user_id'));
+            if (!Number.isInteger(userId) || userId <= 0) return;
+            
+            new bootstrap.Modal(document.getElementById('orderHistoryModal')).show();
+
+            try {
+                const res = await fetch(`${ORDER_API_BASE}/history.php?user_id=${userId}`);
+                const data = await res.json();
+
+                let html = '';
+                if (data.success === true && Array.isArray(data.data) && data.data.length > 0) {
+                    data.data.forEach(order => {
+                        html += `
+                        <div class="card mb-3 shadow-sm border-0">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                                <span class="fw-bold">Mã Đơn: #HD${order.order_id}</span>
+                                <span class="text-muted small">${order.order_date || ''}</span>
+                            </div>
+                            <div class="card-body">
+                        `;
+
+                        (order.items || []).forEach(item => {
+                            html += `
+                                <div class="d-flex align-items-center mb-2 justify-content-between">
+                                    <div>
+                                        <h6 class="mb-0" style="font-size: 0.9rem;">Sản phẩm #${item.product_id || '-'} (detail #${item.detail_id})</h6>
+                                        <small class="text-muted">x${item.quantity}</small>
+                                    </div>
+                                    <span class="text-danger">${Number(item.line_total || 0).toLocaleString('vi-VN')} ₫</span>
+                                </div>
+                            `;
+                        });
+
+                        html += `
+                            </div>
+                            <div class="card-footer bg-white text-end py-3">
+                                Thành tiền: <span class="fs-5 text-danger fw-bold ms-2">${Number(order.total_amount || 0).toLocaleString('vi-VN')} ₫</span>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    html = '<div class="text-center text-muted py-5"><i class="fa fa-box-open fs-1 mb-3"></i><br>Bạn chưa có đơn hàng nào.</div>';
+                }
+
+                document.getElementById('orderHistoryBody').innerHTML = html;
+            } catch (e) {
+                document.getElementById('orderHistoryBody').innerHTML = '<div class="text-center text-danger py-5">Lỗi kết nối!</div>';
+            }
+        }
+
+        checkAuth();
+        loadProducts();
+    </script>
+</body>
+</html>

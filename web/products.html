@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTTMart Products</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --card: #ffffff;
+            --line: #e5eaf2;
+            --text: #1e293b;
+            --muted: #65758b;
+            --deep: #1b2440;
+            --deep-2: #222f56;
+            --primary: #4f46e5;
+            --ok: #0f9d58;
+            --danger: #dc2626;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #eef2f9 0%, #f8fafc 100%);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: linear-gradient(165deg, var(--deep) 0%, var(--deep-2) 100%);
+            color: #d9e2f2;
+            padding: 20px 16px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .brand i { font-size: 1.45rem; color: #7a8cff; }
+
+        .role-badge {
+            margin-top: 8px;
+            margin-bottom: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 999px;
+            padding: 7px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.85rem;
+        }
+
+        .menu-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #8ca1c5;
+            margin: 12px 10px 8px;
+        }
+
+        .menu-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #d9e2f2;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            overflow: hidden;
+            transform: translateX(0);
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: #8aa3ff;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            border-color: rgba(122, 140, 255, 0.45);
+            background: rgba(122, 140, 255, 0.18);
+            color: #fff;
+            transform: translateX(3px);
+        }
+
+        .menu-item:hover::before,
+        .menu-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .menu-item span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .menu-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .content { padding: 14px; }
+
+        .topbar {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .search-wrap {
+            width: 100%;
+            max-width: 460px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 11px;
+            color: var(--muted);
+        }
+
+        .search-wrap input {
+            border: 0;
+            outline: none;
+            width: 100%;
+            font-size: 0.92rem;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-soft {
+            border: 1px solid var(--line);
+            background: white;
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #d4dffb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #1f2a48;
+        }
+
+        .page-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .smart-filters {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .smart-filters select {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            background: #fff;
+            width: 100%;
+        }
+
+        .smart-filters .check-wrap {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 10px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.87rem;
+            color: #334155;
+        }
+
+        .summary-line {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .note-box {
+            border-radius: 10px;
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 0.86rem;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+
+        .status-pill {
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .status-active {
+            color: var(--ok);
+            background: #e8f8ef;
+        }
+
+        .status-inactive {
+            color: var(--danger);
+            background: #ffebee;
+        }
+
+        .variant-row {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fafcff;
+        }
+
+        .variant-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .variant-grid input,
+        .variant-grid select {
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 0.9rem;
+        }
+
+        .image-preview-wrap {
+            grid-column: span 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border: 1px dashed var(--line);
+            border-radius: 10px;
+            background: #fff;
+        }
+
+        .image-preview {
+            width: 180px;
+            height: 180px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid #dbe5f1;
+            background: #f8fafc;
+        }
+
+        .image-preview-meta {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 0.82rem;
+            color: #64748b;
+            flex: 1;
+        }
+
+        .image-preview-meta a {
+            color: #4f46e5;
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
+        .image-picker-row {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+        }
+
+        .image-picker-row input {
+            width: 100%;
+        }
+
+        .image-preview-meta a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { position: static; height: auto; }
+            .variant-grid { grid-template-columns: 1fr; }
+            .image-picker-row { grid-column: span 1; grid-template-columns: 1fr; }
+            .image-preview-wrap { grid-column: span 1; }
+            .image-preview-meta a { max-width: 220px; }
+            .image-preview { width: 140px; height: 140px; }
+            .smart-filters { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="brand"><i class="fa-solid fa-tags"></i><span>UTTMart</span></div>
+            <div class="role-badge" id="roleBadge"><i class="fa-solid fa-shield-halved"></i><span>Dang xac thuc...</span></div>
+
+            <div class="menu-label">MENU</div>
+            <a class="menu-item" href="/manage.html">
+                <span><i class="fa-solid fa-table-columns"></i>Dashboard</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/suppliers.html">
+                <span><i class="fa-solid fa-truck-field"></i>Suppliers</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item active" href="/products.html">
+                <span><i class="fa-solid fa-tags"></i>Products</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/employees.html">
+                <span><i class="fa-solid fa-user-gear"></i>Employees</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/admin-import.html">
+                <span><i class="fa-solid fa-file-import"></i>Import</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/admin-orders.html">
+                <span><i class="fa-solid fa-box-open"></i>Orders</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/">
+                <span><i class="fa-solid fa-store"></i>Shop</span>
+                <span class="menu-right"></span>
+            </a>
+            <a class="menu-item" href="/attendance.html">
+                <span><i class="fa-solid fa-user-check"></i>Cham cong</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+            <a class="menu-item" href="/expenses.html">
+                <span><i class="fa-solid fa-wallet"></i>Chi tieu</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </a>
+
+            <div class="menu-label">SUPPORT</div>
+            <button class="menu-item" id="logoutBtn">
+                <span><i class="fa-solid fa-right-from-bracket"></i>Logout</span>
+                <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+            </button>
+        </aside>
+
+        <main class="content">
+            <div class="topbar">
+                <div class="search-wrap">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input id="searchInput" type="text" placeholder="Tim theo ma, ten, loai...">
+                </div>
+                <div class="top-actions">
+                    <button class="btn-soft" id="refreshBtn"><i class="fa-solid fa-rotate"></i></button>
+                    <div class="small-muted" id="welcomeText">Dang kiem tra quyen...</div>
+                    <div class="avatar" id="avatarText">U</div>
+                </div>
+            </div>
+
+            <section class="page-card">
+                <div class="toolbar">
+                    <div>
+                        <div style="font-size:1.05rem; font-weight:800;">Quan ly san pham</div>
+                        <div style="font-size:0.85rem; color:#64748b;">CRUD san pham khong co so luong. Ton kho chi cap nhat qua Import.</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" id="addProductBtn"><i class="fa-solid fa-plus"></i> Them san pham</button>
+                    </div>
+                </div>
+
+                <div class="note-box">Luu y: khong co truong quantity/stock trong form nay. So luong ton kho duoc quan ly boi trang Import.</div>
+
+                <div class="smart-filters">
+                    <select id="categoryFilter">
+                        <option value="all">Tat ca loai</option>
+                    </select>
+                    <select id="stockFilter">
+                        <option value="all">Tat ca ton kho</option>
+                        <option value="zero">Ton kho = 0</option>
+                        <option value="low">Ton kho thap (1-10)</option>
+                        <option value="normal">Ton kho > 10</option>
+                    </select>
+                    <select id="sortFilter">
+                        <option value="id:desc">Sap xep: Moi nhat</option>
+                        <option value="id:asc">Sap xep: Cu nhat</option>
+                        <option value="name:asc">Ten A-Z</option>
+                        <option value="name:desc">Ten Z-A</option>
+                        <option value="price:asc">Gia thap den cao</option>
+                        <option value="price:desc">Gia cao den thap</option>
+                        <option value="stock:asc">Ton kho tang dan</option>
+                        <option value="stock:desc">Ton kho giam dan</option>
+                    </select>
+                    <label class="check-wrap" for="includeZeroStock">
+                        <input type="checkbox" id="includeZeroStock" checked>
+                        <span>Hien thi ca san pham ton kho = 0</span>
+                    </label>
+                </div>
+
+                <div class="summary-line" id="productsSummary">0 / 0 san pham</div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Ma</th>
+                                <th>Ten san pham</th>
+                                <th>Loai</th>
+                                <th>Gia hien thi</th>
+                                <th>Trang thai KD</th>
+                                <th>Tong ton</th>
+                                <th>Thao tac</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal fade" id="productModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productModalTitle">Them san pham</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Ten san pham</label>
+                            <input id="productNameInput" type="text" class="form-control" placeholder="VD: AO THUN BASIC">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Loai san pham</label>
+                            <select id="categoryInput" class="form-select"></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Trang thai KD</label>
+                            <select id="businessStatusInput" class="form-select">
+                                <option value="1">Dang kinh doanh</option>
+                                <option value="0">Ngung kinh doanh</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Mo ta</label>
+                            <textarea id="descriptionInput" class="form-control" rows="2" placeholder="Mo ta ngan..."></textarea>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-bold">Bien the (mau/size/gia/anh) - khong co quantity</div>
+                        <button class="btn btn-outline-primary btn-sm" id="addVariantBtn" type="button"><i class="fa-solid fa-plus"></i> Them bien the</button>
+                    </div>
+                    <div id="variantsWrap"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Dong</button>
+                    <button class="btn btn-primary" id="saveProductBtn">Luu san pham</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const PRODUCT_API = '/api/products';
+
+        let userId = 0;
+        let categories = [];
+        let products = [];
+        let editingProductId = 0;
+
+        function logout() {
+            localStorage.removeItem('polymart_user');
+            localStorage.removeItem('fashion_user_id');
+            window.location.href = '/login.html';
+        }
+
+        async function fetchJson(url, options = {}) {
+            const res = await fetch(url, {
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+                ...options,
+            });
+            const text = await res.text();
+            let json = null;
+            try {
+                json = JSON.parse(text);
+            } catch (e) {
+                throw new Error('Invalid JSON response');
+            }
+            if (!res.ok || json.success !== true) {
+                throw new Error(json.message || ('HTTP ' + res.status));
+            }
+            return json.data;
+        }
+
+        function formatCurrency(value) {
+            return Number(value || 0).toLocaleString('vi-VN') + ' đ';
+        }
+
+        function renderCategories() {
+            const formSelect = document.getElementById('categoryInput');
+            formSelect.innerHTML = categories.map((c) => `<option value="${c.category_id}">${c.category_name}</option>`).join('');
+
+            const filterSelect = document.getElementById('categoryFilter');
+            const current = filterSelect.value || 'all';
+            filterSelect.innerHTML = '<option value="all">Tat ca loai</option>' + categories.map((c) => `<option value="${c.category_id}">${c.category_name}</option>`).join('');
+            if ([...filterSelect.options].some((o) => o.value === current)) {
+                filterSelect.value = current;
+            }
+        }
+
+        function renderProductsTable() {
+            const keyword = String(document.getElementById('searchInput').value || '').trim().toLowerCase();
+            const categoryFilterValue = document.getElementById('categoryFilter').value;
+            const stockFilterValue = document.getElementById('stockFilter').value;
+            const sortFilterValue = document.getElementById('sortFilter').value;
+            const includeZero = document.getElementById('includeZeroStock').checked;
+
+            let filtered = products.filter((p) => {
+                if (!keyword) return true;
+                const text = [p.product_id, p.product_name, p.category_name].join(' ').toLowerCase();
+                return text.includes(keyword);
+            });
+
+            if (categoryFilterValue !== 'all') {
+                const categoryId = Number(categoryFilterValue || 0);
+                filtered = filtered.filter((p) => Number(p.category_id || 0) === categoryId);
+            }
+
+            if (!includeZero) {
+                filtered = filtered.filter((p) => Number(p.total_stock || 0) > 0);
+            }
+
+            if (stockFilterValue === 'zero') {
+                filtered = filtered.filter((p) => Number(p.total_stock || 0) === 0);
+            } else if (stockFilterValue === 'low') {
+                filtered = filtered.filter((p) => {
+                    const stock = Number(p.total_stock || 0);
+                    return stock > 0 && stock <= 10;
+                });
+            } else if (stockFilterValue === 'normal') {
+                filtered = filtered.filter((p) => Number(p.total_stock || 0) > 10);
+            }
+
+            const [sortField, sortDir] = String(sortFilterValue || 'id:desc').split(':');
+            filtered = filtered.slice().sort((a, b) => {
+                const dir = sortDir === 'asc' ? 1 : -1;
+
+                if (sortField === 'name') {
+                    return String(a.product_name || '').localeCompare(String(b.product_name || ''), 'vi') * dir;
+                }
+
+                if (sortField === 'price') {
+                    return (Number(a.price || 0) - Number(b.price || 0)) * dir;
+                }
+
+                if (sortField === 'stock') {
+                    return (Number(a.total_stock || 0) - Number(b.total_stock || 0)) * dir;
+                }
+
+                return (Number(a.product_id || 0) - Number(b.product_id || 0)) * dir;
+            });
+
+            document.getElementById('productsSummary').textContent = `${filtered.length} / ${products.length} san pham`;
+
+            const body = document.getElementById('productsBody');
+            if (!filtered.length) {
+                body.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Khong co san pham phu hop</td></tr>';
+                return;
+            }
+
+            body.innerHTML = filtered.map((p) => {
+                const active = Number(p.business_status || 0) === 1;
+                const stock = Number(p.total_stock || 0);
+                const stockHtml = stock === 0
+                    ? '<span class="status-pill status-inactive">0 - Het hang</span>'
+                    : (stock <= 10
+                        ? `<span class="status-pill" style="background:#fff7e6;color:#b45309;">${stock} - Sap het</span>`
+                        : `<span class="status-pill status-active">${stock}</span>`);
+                return `
+                    <tr>
+                        <td class="fw-semibold">#${p.product_id}</td>
+                        <td>${p.product_name || '-'}</td>
+                        <td>${p.category_name || '-'}</td>
+                        <td class="text-danger fw-semibold">${formatCurrency(p.price || 0)}</td>
+                        <td><span class="status-pill ${active ? 'status-active' : 'status-inactive'}">${active ? 'Dang KD' : 'Ngung KD'}</span></td>
+                        <td>${stockHtml}</td>
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button class="btn btn-sm btn-outline-primary" data-edit="${p.product_id}">Sua</button>
+                                <button class="btn btn-sm btn-outline-danger" data-delete="${p.product_id}">Xoa</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function createVariantNode(data = {}) {
+            const node = document.createElement('div');
+            node.className = 'variant-row';
+            node.innerHTML = `
+                <div class="variant-grid">
+                    <input type="hidden" class="js-detail-id" value="${Number(data.detail_id || 0)}">
+                    <input class="js-color" placeholder="Mau sac" value="${data.color || ''}">
+                    <input class="js-size" placeholder="Size" value="${data.size || ''}">
+                    <input class="js-price" type="number" min="0" step="0.01" placeholder="Gia ban" value="${Number(data.original_price ?? data.price ?? 0)}">
+                    <input class="js-discount" type="number" min="0" step="0.01" placeholder="Giam gia" value="${Number(data.discount || 0)}">
+                    <div class="image-picker-row">
+                        <input class="js-image" placeholder="Ten anh luu (tu dong theo ten file da chon)" value="${(data.images && data.images[0]) ? data.images[0] : (data.image || '')}">
+                        <button class="btn btn-outline-primary js-pick-image" type="button"><i class="fa-regular fa-image"></i> Them anh</button>
+                        <input class="js-image-file" type="file" accept="image/*" hidden>
+                    </div>
+                    <select class="js-status">
+                        <option value="1" ${Number(data.status || 1) === 1 ? 'selected' : ''}>Hien thi</option>
+                        <option value="0" ${Number(data.status || 1) === 0 ? 'selected' : ''}>An</option>
+                    </select>
+                    <div class="image-preview-wrap">
+                        <img class="image-preview js-image-preview" alt="preview" src="">
+                        <div class="image-preview-meta">
+                            <div class="js-image-preview-text">Chua co anh preview</div>
+                            <a class="js-image-preview-link" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Mo anh trong tab moi</a>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-danger js-remove-variant" type="button">Xoa bien the</button>
+                </div>
+            `;
+
+            const imageInput = node.querySelector('.js-image');
+            const fileInput = node.querySelector('.js-image-file');
+            const pickBtn = node.querySelector('.js-pick-image');
+
+            pickBtn.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', () => {
+                const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+                if (!file) return;
+
+                const oldPreviewUrl = node.getAttribute('data-local-preview-url');
+                if (oldPreviewUrl) {
+                    URL.revokeObjectURL(oldPreviewUrl);
+                }
+
+                const localPreviewUrl = URL.createObjectURL(file);
+                node.setAttribute('data-local-preview-url', localPreviewUrl);
+                imageInput.value = file.name;
+                updateVariantPreview(node);
+            });
+
+            imageInput.addEventListener('input', () => {
+                const localPreviewUrl = node.getAttribute('data-local-preview-url');
+                if (localPreviewUrl) {
+                    URL.revokeObjectURL(localPreviewUrl);
+                    node.removeAttribute('data-local-preview-url');
+                    fileInput.value = '';
+                }
+                updateVariantPreview(node);
+            });
+            imageInput.addEventListener('change', () => updateVariantPreview(node));
+
+            node.querySelector('.js-remove-variant').addEventListener('click', function () {
+                const detailId = Number(node.querySelector('.js-detail-id').value || 0);
+                if (detailId > 0) {
+                    node.setAttribute('data-removed', '1');
+                    node.style.display = 'none';
+                } else {
+                    const localPreviewUrl = node.getAttribute('data-local-preview-url');
+                    if (localPreviewUrl) {
+                        URL.revokeObjectURL(localPreviewUrl);
+                    }
+                    node.remove();
+                }
+            });
+
+            updateVariantPreview(node);
+
+            return node;
+        }
+
+        function resolveVariantImageSrc(rawValue) {
+            const raw = String(rawValue || '').trim();
+            if (!raw) {
+                return '';
+            }
+
+            if (/^https?:\/\//i.test(raw)) {
+                return raw;
+            }
+
+            if (raw.startsWith('images/')) {
+                return raw;
+            }
+
+            return 'images/anh-san-pham/' + encodeURIComponent(raw);
+        }
+
+        function updateVariantPreview(node) {
+            const input = node.querySelector('.js-image');
+            const preview = node.querySelector('.js-image-preview');
+            const text = node.querySelector('.js-image-preview-text');
+            const link = node.querySelector('.js-image-preview-link');
+
+            const raw = String(input.value || '').trim();
+            const localPreviewUrl = node.getAttribute('data-local-preview-url') || '';
+            const src = localPreviewUrl || resolveVariantImageSrc(raw);
+
+            if (!src) {
+                preview.src = '';
+                text.textContent = 'Chua co anh preview';
+                link.style.display = 'none';
+                link.removeAttribute('href');
+                return;
+            }
+
+            preview.src = src;
+            preview.onerror = function () {
+                this.onerror = null;
+                this.src = '';
+                text.textContent = 'Khong tai duoc anh tu nguon nay';
+                link.style.display = 'none';
+                link.removeAttribute('href');
+            };
+
+            text.textContent = raw || 'Anh tu file local';
+            if (localPreviewUrl) {
+                link.style.display = 'none';
+                link.removeAttribute('href');
+            } else {
+                link.href = src;
+                link.style.display = 'inline';
+            }
+        }
+
+        function resetForm() {
+            editingProductId = 0;
+            document.getElementById('productModalTitle').textContent = 'Them san pham';
+            document.getElementById('productNameInput').value = '';
+            document.getElementById('descriptionInput').value = '';
+            document.getElementById('businessStatusInput').value = '1';
+            const wrap = document.getElementById('variantsWrap');
+            wrap.innerHTML = '';
+            wrap.appendChild(createVariantNode());
+        }
+
+        function gatherPayload() {
+            const productName = document.getElementById('productNameInput').value.trim();
+            const categoryId = Number(document.getElementById('categoryInput').value || 0);
+            const description = document.getElementById('descriptionInput').value.trim();
+            const businessStatus = Number(document.getElementById('businessStatusInput').value || 1);
+
+            if (!productName || categoryId <= 0) {
+                throw new Error('Vui long nhap ten va chon loai san pham.');
+            }
+
+            const variantNodes = [...document.querySelectorAll('#variantsWrap .variant-row')];
+            const removedDetailIds = [];
+
+            const variants = variantNodes
+                .filter((n) => {
+                    const removed = n.getAttribute('data-removed') === '1';
+                    if (removed) {
+                        const detailId = Number(n.querySelector('.js-detail-id').value || 0);
+                        if (detailId > 0) removedDetailIds.push(detailId);
+                    }
+                    return !removed;
+                })
+                .map((n) => ({
+                    detail_id: Number(n.querySelector('.js-detail-id').value || 0),
+                    color: n.querySelector('.js-color').value.trim(),
+                    size: n.querySelector('.js-size').value.trim(),
+                    price: Number(n.querySelector('.js-price').value || 0),
+                    discount: Number(n.querySelector('.js-discount').value || 0),
+                    image: n.querySelector('.js-image').value.trim(),
+                    status: Number(n.querySelector('.js-status').value || 1),
+                }))
+                .filter((v) => v.color && v.size && v.price >= 0);
+
+            if (variants.length === 0) {
+                throw new Error('Can it nhat 1 bien the hop le.');
+            }
+
+            return {
+                user_id: userId,
+                product_name: productName,
+                description,
+                category_id: categoryId,
+                business_status: businessStatus,
+                variants,
+                removed_detail_ids: removedDetailIds,
+            };
+        }
+
+        async function loadProducts() {
+            products = await fetchJson(`${PRODUCT_API}/get-all.php`);
+            if (!Array.isArray(products)) products = [];
+            renderProductsTable();
+        }
+
+        async function openEdit(productId) {
+            const data = await fetchJson(`${PRODUCT_API}/get-detail.php?id=${productId}`);
+            editingProductId = Number(data.product_id || 0);
+            document.getElementById('productModalTitle').textContent = `Sua san pham #${editingProductId}`;
+            document.getElementById('productNameInput').value = data.product_name || '';
+            document.getElementById('descriptionInput').value = data.description || '';
+            document.getElementById('categoryInput').value = String(data.category_id || '');
+            document.getElementById('businessStatusInput').value = String(Number(data.business_status || 0));
+
+            const wrap = document.getElementById('variantsWrap');
+            wrap.innerHTML = '';
+            const variants = Array.isArray(data.variants) ? data.variants : [];
+            if (!variants.length) {
+                wrap.appendChild(createVariantNode());
+            } else {
+                variants.forEach((v) => wrap.appendChild(createVariantNode(v)));
+            }
+
+            new bootstrap.Modal(document.getElementById('productModal')).show();
+        }
+
+        async function saveProduct() {
+            const payload = gatherPayload();
+            const btn = document.getElementById('saveProductBtn');
+            btn.disabled = true;
+            btn.textContent = 'Dang luu...';
+
+            try {
+                if (editingProductId > 0) {
+                    payload.product_id = editingProductId;
+                    await fetchJson(`${PRODUCT_API}/update.php`, {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                    });
+                } else {
+                    await fetchJson(`${PRODUCT_API}/create.php`, {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                    });
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+                await loadProducts();
+                alert('Luu san pham thanh cong.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Luu san pham';
+            }
+        }
+
+        async function deleteProduct(productId) {
+            if (!confirm('Ban chac chan muon an san pham nay?')) return;
+            await fetchJson(`${PRODUCT_API}/delete.php`, {
+                method: 'POST',
+                body: JSON.stringify({ user_id: userId, product_id: productId, mode: 'soft' }),
+            });
+            await loadProducts();
+        }
+
+        (function boot() {
+            const userRaw = localStorage.getItem('polymart_user');
+            if (!userRaw) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            let user = null;
+            try {
+                user = JSON.parse(userRaw);
+            } catch (e) {
+                logout();
+                return;
+            }
+
+            const role = String(user.ROLE || '').toLowerCase();
+            if (role !== 'admin' && role !== 'staff') {
+                window.location.href = '/';
+                return;
+            }
+
+            userId = Number(user.ID || localStorage.getItem('fashion_user_id') || 0);
+            if (!Number.isInteger(userId) || userId <= 0) {
+                logout();
+                return;
+            }
+
+            const roleLabel = role === 'admin' ? 'Quan tri vien' : 'Nhan vien';
+            document.getElementById('welcomeText').textContent = `${user.HOTEN || 'Nguoi dung'} • ${roleLabel}`;
+            document.getElementById('roleBadge').innerHTML = `<i class="fa-solid fa-shield-halved"></i><span>${roleLabel}</span>`;
+            document.getElementById('avatarText').textContent = String(user.HOTEN || 'U').trim().charAt(0).toUpperCase();
+            if (role !== 'admin') {
+                document.querySelectorAll('a.menu-item[href="/employees.html"]').forEach((el) => {
+                    el.style.display = 'none';
+                });
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('searchInput').addEventListener('input', renderProductsTable);
+            document.getElementById('categoryFilter').addEventListener('change', renderProductsTable);
+            document.getElementById('stockFilter').addEventListener('change', renderProductsTable);
+            document.getElementById('sortFilter').addEventListener('change', renderProductsTable);
+            document.getElementById('includeZeroStock').addEventListener('change', renderProductsTable);
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                loadProducts().catch((err) => alert('Khong tai duoc danh sach san pham: ' + err.message));
+            });
+
+            document.getElementById('addProductBtn').addEventListener('click', () => {
+                resetForm();
+                new bootstrap.Modal(document.getElementById('productModal')).show();
+            });
+
+            document.getElementById('addVariantBtn').addEventListener('click', () => {
+                document.getElementById('variantsWrap').appendChild(createVariantNode());
+            });
+
+            document.getElementById('saveProductBtn').addEventListener('click', () => {
+                saveProduct().catch((err) => alert('Khong luu duoc san pham: ' + err.message));
+            });
+
+            document.getElementById('productsBody').addEventListener('click', (event) => {
+                const editBtn = event.target.closest('button[data-edit]');
+                const deleteBtn = event.target.closest('button[data-delete]');
+
+                if (editBtn) {
+                    const id = Number(editBtn.getAttribute('data-edit') || 0);
+                    if (id > 0) {
+                        openEdit(id).catch((err) => alert('Khong mo duoc form sua: ' + err.message));
+                    }
+                    return;
+                }
+
+                if (deleteBtn) {
+                    const id = Number(deleteBtn.getAttribute('data-delete') || 0);
+                    if (id > 0) {
+                        deleteProduct(id).catch((err) => alert('Khong xoa duoc san pham: ' + err.message));
+                    }
+                }
+            });
+
+            Promise.all([
+                fetchJson(`${PRODUCT_API}/categories.php`),
+                loadProducts(),
+            ]).then(([cats]) => {
+                categories = Array.isArray(cats) ? cats : [];
+                renderCategories();
+                resetForm();
+            }).catch((err) => alert('Khoi tao trang that bai: ' + err.message));
+        })();
+    </script>
+</body>
+</html>

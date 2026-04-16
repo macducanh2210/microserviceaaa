@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTTMart Attendance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --card: #ffffff;
+            --line: #e5eaf2;
+            --text: #1e293b;
+            --muted: #65758b;
+            --deep: #1b2440;
+            --deep-2: #222f56;
+            --primary: #4f46e5;
+            --ok: #0f9d58;
+            --danger: #dc2626;
+            --warn: #f59e0b;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #eef2f9 0%, #f8fafc 100%);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: linear-gradient(165deg, var(--deep) 0%, var(--deep-2) 100%);
+            color: #d9e2f2;
+            padding: 20px 16px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .brand i { font-size: 1.45rem; color: #7a8cff; }
+
+        .role-badge {
+            margin-top: 8px;
+            margin-bottom: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 999px;
+            padding: 7px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.85rem;
+        }
+
+        .menu-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #8ca1c5;
+            margin: 12px 10px 8px;
+        }
+
+        .menu-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #d9e2f2;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            overflow: hidden;
+            transform: translateX(0);
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: #8aa3ff;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            border-color: rgba(122, 140, 255, 0.45);
+            background: rgba(122, 140, 255, 0.18);
+            color: #fff;
+            transform: translateX(3px);
+        }
+
+        .menu-item:hover::before,
+        .menu-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .menu-item span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .menu-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .content { padding: 14px; }
+
+        .topbar {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-soft {
+            border: 1px solid var(--line);
+            background: white;
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #d4dffb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #1f2a48;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .cardx {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+        }
+
+        .card-title {
+            font-size: 0.88rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .card-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+        }
+
+        .status-ok { color: var(--ok); }
+        .status-warn { color: var(--warn); }
+        .status-danger { color: var(--danger); }
+
+        .page-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .btn-checkin {
+            background: var(--ok);
+            color: #fff;
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+        }
+
+        .btn-checkout {
+            background: var(--primary);
+            color: #fff;
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 700;
+        }
+
+        .small-muted {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .toolbar input {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 8px 10px;
+        }
+
+        .table-wrap { overflow: auto; }
+
+        @media (max-width: 1120px) {
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { position: static; height: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand"><i class="fa-solid fa-user-clock"></i><span>UTTMart</span></div>
+        <div class="role-badge" id="roleBadge"><i class="fa-solid fa-shield-halved"></i><span>Dang xac thuc...</span></div>
+
+        <div class="menu-label">MENU</div>
+        <a class="menu-item" href="/manage.html">
+            <span><i class="fa-solid fa-table-columns"></i>Dashboard</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+        <a class="menu-item" href="/suppliers.html">
+            <span><i class="fa-solid fa-truck-field"></i>Suppliers</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+        <a class="menu-item" href="/products.html">
+            <span><i class="fa-solid fa-tags"></i>Products</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+        <a class="menu-item" href="/employees.html">
+            <span><i class="fa-solid fa-user-gear"></i>Employees</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+        <a class="menu-item" href="/admin-import.html">
+            <span><i class="fa-solid fa-file-import"></i>Import</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+        <a class="menu-item" href="/admin-orders.html">
+            <span><i class="fa-solid fa-box-open"></i>Orders</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+        <a class="menu-item active" href="/attendance.html">
+            <span><i class="fa-solid fa-user-check"></i>Cham cong</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+        <a class="menu-item" href="/expenses.html">
+            <span><i class="fa-solid fa-wallet"></i>Chi tieu</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+        <a class="menu-item" href="/">
+            <span><i class="fa-solid fa-store"></i>Shop</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </a>
+
+        <div class="menu-label">SUPPORT</div>
+        <button class="menu-item" id="logoutBtn">
+            <span><i class="fa-solid fa-right-from-bracket"></i>Logout</span>
+            <span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span>
+        </button>
+    </aside>
+
+    <main class="content">
+        <div class="topbar">
+            <div class="small-muted" id="welcomeText">Dang kiem tra quyen...</div>
+            <div class="top-actions">
+                <button class="btn-soft" id="refreshBtn"><i class="fa-solid fa-rotate"></i></button>
+                <div class="avatar" id="avatarText">U</div>
+            </div>
+        </div>
+
+        <section class="cards">
+            <div class="cardx">
+                <div class="card-title">Thoi gian hien tai</div>
+                <div class="card-value" id="nowTime">--:--:--</div>
+            </div>
+            <div class="cardx">
+                <div class="card-title">Trang thai hom nay</div>
+                <div class="card-value" id="todayStatus">Chua tai</div>
+            </div>
+            <div class="cardx">
+                <div class="card-title">Khung gio hop le</div>
+                <div class="small-muted">Check-in: 07:00 - 21:00</div>
+                <div class="small-muted">Check-out: 20:00 - 21:00</div>
+            </div>
+        </section>
+
+        <section class="page-card">
+            <div class="fw-bold mb-2">Cham cong ca nhan</div>
+            <div class="small-muted" id="todayInfo">Dang tai du lieu...</div>
+            <div class="actions">
+                <button class="btn-checkin" id="checkInBtn" type="button">Check-in</button>
+                <button class="btn-checkout" id="checkOutBtn" type="button">Check-out</button>
+            </div>
+        </section>
+
+        <section class="page-card">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div class="fw-bold">Luong theo thang (tru 100.000 VND/lan di muon hoac ve som)</div>
+            </div>
+            <div class="toolbar">
+                <input type="month" id="monthInput">
+                <button class="btn-soft" id="loadPayrollBtn" type="button">Xem luong thang</button>
+                <button class="btn-soft" id="paySalaryBtn" type="button">Thanh toan luong thang</button>
+                <span class="small-muted" id="payrollSummary"></span>
+            </div>
+            <div class="table-wrap">
+                <table class="table table-sm align-middle">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ho ten</th>
+                        <th>Chuc vu</th>
+                        <th>Luong co ban</th>
+                        <th>Ngay cong</th>
+                        <th>Vi pham</th>
+                        <th>Tien tru</th>
+                        <th>Luong thuc nhan</th>
+                    </tr>
+                    </thead>
+                    <tbody id="payrollBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    const ATTENDANCE_API = '/api/attendance';
+    let currentUser = null;
+
+    function formatMoney(value) {
+        return Number(value || 0).toLocaleString('vi-VN') + ' đ';
+    }
+
+    function logout() {
+        localStorage.removeItem('polymart_user');
+        localStorage.removeItem('fashion_user_id');
+        window.location.href = '/login.html';
+    }
+
+    async function fetchJson(url, options = {}) {
+        const res = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options,
+        });
+
+        const text = await res.text();
+        let json = null;
+        try {
+            json = JSON.parse(text);
+        } catch (e) {
+            throw new Error('Invalid JSON response');
+        }
+
+        if (!res.ok || json.success !== true) {
+            throw new Error(json.message || ('HTTP ' + res.status));
+        }
+
+        return json.data;
+    }
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('nowTime').textContent = now.toLocaleTimeString('vi-VN');
+    }
+
+    async function loadTodayStatus() {
+        const data = await fetchJson(`${ATTENDANCE_API}/today-status.php?employee_id=${currentUser.ID}`);
+
+        const checkInAt = data.check_in_at || 'Chua check-in';
+        const checkOutAt = data.check_out_at || 'Chua check-out';
+        document.getElementById('todayInfo').textContent = `Check-in: ${checkInAt} | Check-out: ${checkOutAt}`;
+
+        let statusText = 'Chua cham cong';
+        let statusClass = 'status-warn';
+        if (data.check_in_at && !data.check_out_at) {
+            statusText = 'Da check-in';
+            statusClass = 'status-ok';
+        }
+        if (data.check_in_at && data.check_out_at) {
+            statusText = 'Da hoan tat ca';
+            statusClass = 'status-ok';
+        }
+
+        const statusEl = document.getElementById('todayStatus');
+        statusEl.textContent = statusText;
+        statusEl.className = `card-value ${statusClass}`;
+
+        document.getElementById('checkInBtn').disabled = !data.can_check_in_now || data.record_exists;
+        document.getElementById('checkOutBtn').disabled = !data.can_check_out_now || !data.record_exists || Boolean(data.check_out_at);
+    }
+
+    async function checkIn() {
+        await fetchJson(`${ATTENDANCE_API}/check-in.php`, {
+            method: 'POST',
+            body: JSON.stringify({ employee_id: Number(currentUser.ID) }),
+        });
+        await loadTodayStatus();
+        await loadPayroll();
+    }
+
+    async function checkOut() {
+        await fetchJson(`${ATTENDANCE_API}/check-out.php`, {
+            method: 'POST',
+            body: JSON.stringify({ employee_id: Number(currentUser.ID) }),
+        });
+        await loadTodayStatus();
+        await loadPayroll();
+    }
+
+    function renderPayroll(rows) {
+        const body = document.getElementById('payrollBody');
+        if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Khong co du lieu</td></tr>';
+            return;
+        }
+
+        body.innerHTML = rows.map((row) => `
+            <tr>
+                <td>${row.employee_id}</td>
+                <td>${row.full_name || '-'}</td>
+                <td>${row.position || '-'}</td>
+                <td>${formatMoney(row.base_salary)}</td>
+                <td>${row.work_days}</td>
+                <td>${row.violation_days}</td>
+                <td class="text-danger fw-semibold">${formatMoney(row.deduction_amount)}</td>
+                <td class="text-success fw-semibold">${formatMoney(row.final_salary)}</td>
+            </tr>
+        `).join('');
+    }
+
+    async function loadPayroll() {
+        const month = document.getElementById('monthInput').value || new Date().toISOString().slice(0, 7);
+        let url = `${ATTENDANCE_API}/monthly-payroll.php?month=${encodeURIComponent(month)}`;
+
+        if (String(currentUser.ROLE).toLowerCase() === 'staff') {
+            url += `&employee_id=${currentUser.ID}`;
+        }
+
+        const rows = await fetchJson(url);
+        renderPayroll(rows);
+
+        const totalFinal = rows.reduce((sum, row) => sum + Number(row.final_salary || 0), 0);
+        document.getElementById('payrollSummary').textContent = `${rows.length} nhan vien | Tong luong thuc nhan: ${formatMoney(totalFinal)}`;
+    }
+
+    async function paySalary() {
+        const month = document.getElementById('monthInput').value || new Date().toISOString().slice(0, 7);
+        const payload = {
+            month,
+            paid_by_employee_id: Number(currentUser.ID || 0),
+        };
+
+        if (String(currentUser.ROLE || '').toLowerCase() === 'staff') {
+            payload.employee_id = Number(currentUser.ID || 0);
+        }
+
+        const result = await fetchJson(`${ATTENDANCE_API}/pay-salary.php`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+
+        alert(`Da thanh toan: ${result.paid_count} | Da ton tai: ${result.duplicate_count} | Bo qua: ${result.skipped_count}`);
+        await loadPayroll();
+    }
+
+    (function boot() {
+        const userRaw = localStorage.getItem('polymart_user');
+        if (!userRaw) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        try {
+            currentUser = JSON.parse(userRaw);
+        } catch (e) {
+            logout();
+            return;
+        }
+
+        const role = String(currentUser.ROLE || '').toLowerCase();
+        if (role !== 'admin' && role !== 'staff') {
+            window.location.href = '/';
+            return;
+        }
+
+        const roleLabel = role === 'admin' ? 'Quan tri vien' : 'Nhan vien';
+        document.getElementById('welcomeText').textContent = `${currentUser.HOTEN || 'Nguoi dung'} • ${roleLabel}`;
+        document.getElementById('roleBadge').innerHTML = `<i class="fa-solid fa-shield-halved"></i><span>${roleLabel}</span>`;
+        document.getElementById('avatarText').textContent = String(currentUser.HOTEN || 'U').trim().charAt(0).toUpperCase();
+        if (role !== 'admin') {
+            document.querySelectorAll('a.menu-item[href="/employees.html"]').forEach((el) => {
+                el.style.display = 'none';
+            });
+        }
+
+        document.getElementById('monthInput').value = new Date().toISOString().slice(0, 7);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('refreshBtn').addEventListener('click', async function () {
+            try {
+                await loadTodayStatus();
+                await loadPayroll();
+            } catch (err) {
+                alert('Khong tai duoc du lieu: ' + err.message);
+            }
+        });
+        document.getElementById('checkInBtn').addEventListener('click', async function () {
+            try {
+                await checkIn();
+                alert('Check-in thanh cong.');
+            } catch (err) {
+                alert('Check-in that bai: ' + err.message);
+            }
+        });
+        document.getElementById('checkOutBtn').addEventListener('click', async function () {
+            try {
+                await checkOut();
+                alert('Check-out thanh cong.');
+            } catch (err) {
+                alert('Check-out that bai: ' + err.message);
+            }
+        });
+        document.getElementById('loadPayrollBtn').addEventListener('click', function () {
+            loadPayroll().catch((err) => alert('Khong tai duoc bang luong: ' + err.message));
+        });
+        document.getElementById('paySalaryBtn').addEventListener('click', function () {
+            paySalary().catch((err) => alert('Thanh toan luong that bai: ' + err.message));
+        });
+
+        if (role !== 'admin') {
+            document.getElementById('paySalaryBtn').disabled = true;
+            document.getElementById('paySalaryBtn').title = 'Chi admin moi duoc thanh toan luong.';
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        loadTodayStatus().catch((err) => alert('Khong tai duoc trang thai cham cong: ' + err.message));
+        loadPayroll().catch((err) => alert('Khong tai duoc bang luong: ' + err.message));
+    })();
+</script>
+</body>
+</html>

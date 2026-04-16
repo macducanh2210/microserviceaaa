@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTTMart Expense Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --card: #ffffff;
+            --line: #e5eaf2;
+            --text: #1e293b;
+            --muted: #65758b;
+            --deep: #1b2440;
+            --deep-2: #222f56;
+            --ok: #0f9d58;
+            --danger: #dc2626;
+            --primary: #4f46e5;
+            --warn: #f59e0b;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #eef2f9 0%, #f8fafc 100%);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: linear-gradient(165deg, var(--deep) 0%, var(--deep-2) 100%);
+            color: #d9e2f2;
+            padding: 20px 16px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .brand i { font-size: 1.45rem; color: #7a8cff; }
+
+        .role-badge {
+            margin-top: 8px;
+            margin-bottom: 18px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 999px;
+            padding: 7px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.85rem;
+        }
+
+        .menu-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #8ca1c5;
+            margin: 12px 10px 8px;
+        }
+
+        .menu-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #d9e2f2;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            overflow: hidden;
+            transform: translateX(0);
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: #8aa3ff;
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            border-color: rgba(122, 140, 255, 0.45);
+            background: rgba(122, 140, 255, 0.18);
+            color: #fff;
+            transform: translateX(3px);
+        }
+
+        .menu-item:hover::before,
+        .menu-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .menu-item span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .menu-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1;
+        }
+
+        .content { padding: 14px; }
+
+        .topbar {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-soft {
+            border: 1px solid var(--line);
+            background: white;
+            border-radius: 10px;
+            padding: 7px 10px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #d4dffb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #1f2a48;
+        }
+
+        .filter-card, .table-card, .kpi {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field label {
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .field input,
+        .field select {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 9px 10px;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .kpi-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .kpi-label {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        .val-danger { color: var(--danger); }
+        .val-ok { color: var(--ok); }
+        .val-warn { color: var(--warn); }
+
+        .table-wrap { overflow: auto; }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .trash-switch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .trash-tab {
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--text);
+            border-radius: 999px;
+            padding: 7px 14px;
+            font-weight: 700;
+            font-size: 0.86rem;
+        }
+
+        .trash-tab.active {
+            border-color: #fecaca;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-type {
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .type-import { background: #ffedd5; color: #9a3412; }
+        .type-salary { background: #fee2e2; color: #991b1b; }
+        .type-other { background: #e2e8f0; color: #334155; }
+
+        .small-muted {
+            font-size: 0.82rem;
+            color: var(--muted);
+        }
+
+        @media (max-width: 1120px) {
+            .filters { grid-template-columns: 1fr 1fr; }
+            .kpi-grid { grid-template-columns: 1fr 1fr; }
+            .form-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { position: static; height: auto; }
+            .filters { grid-template-columns: 1fr; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand"><i class="fa-solid fa-money-bill-transfer"></i><span>UTTMart</span></div>
+        <div class="role-badge" id="roleBadge"><i class="fa-solid fa-shield-halved"></i><span>Dang xac thuc...</span></div>
+
+        <div class="menu-label">MENU</div>
+        <a class="menu-item" href="/manage.html"><span><i class="fa-solid fa-table-columns"></i>Dashboard</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+        <a class="menu-item" href="/suppliers.html"><span><i class="fa-solid fa-truck-field"></i>Suppliers</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+        <a class="menu-item" href="/products.html"><span><i class="fa-solid fa-tags"></i>Products</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+        <a class="menu-item" href="/employees.html"><span><i class="fa-solid fa-user-gear"></i>Employees</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+        <a class="menu-item" href="/admin-import.html"><span><i class="fa-solid fa-file-import"></i>Import</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+        <a class="menu-item" href="/admin-orders.html"><span><i class="fa-solid fa-box-open"></i>Orders</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+        <a class="menu-item" href="/attendance.html"><span><i class="fa-solid fa-user-check"></i>Cham cong</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+        <a class="menu-item active" href="/expenses.html"><span><i class="fa-solid fa-wallet"></i>Chi tieu</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+        <a class="menu-item" href="/"><span><i class="fa-solid fa-store"></i>Shop</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></a>
+
+        <div class="menu-label">SUPPORT</div>
+        <button class="menu-item" id="logoutBtn"><span><i class="fa-solid fa-right-from-bracket"></i>Logout</span><span class="menu-right"><i class="fa-solid fa-chevron-right"></i></span></button>
+    </aside>
+
+    <main class="content">
+        <div class="topbar">
+            <div>
+                <div style="font-weight: 800;">Quan ly chi tieu</div>
+                <div class="small-muted">Loc theo thang, loai chi tieu, nhan vien va theo doi tong quan</div>
+            </div>
+            <div class="top-actions">
+                <button class="btn-soft" id="refreshBtn"><i class="fa-solid fa-rotate"></i></button>
+                <div class="small-muted" id="welcomeText">Dang kiem tra quyen...</div>
+                <div class="avatar" id="avatarText">U</div>
+            </div>
+        </div>
+
+        <section class="filter-card">
+            <div class="filters">
+                <div class="field">
+                    <label for="monthInput">Thang</label>
+                    <input type="month" id="monthInput">
+                </div>
+                <div class="field">
+                    <label for="typeFilter">Loai chi tieu</label>
+                    <select id="typeFilter">
+                        <option value="">Tat ca</option>
+                        <option value="import">Nhap hang</option>
+                        <option value="salary">Luong</option>
+                        <option value="other">Khac</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="employeeFilter">Nhan vien</label>
+                    <select id="employeeFilter">
+                        <option value="">Tat ca nhan vien</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <button class="btn-soft" id="applyFilterBtn" type="button">Ap dung bo loc</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="filter-card">
+            <div class="trash-switch">
+                <button class="trash-tab active" id="viewActiveBtn" type="button"><i class="fa-solid fa-list"></i> Dang hoat dong</button>
+                <button class="trash-tab" id="viewTrashBtn" type="button"><i class="fa-solid fa-trash"></i> Thung rac</button>
+                <span class="small-muted" id="trashHint">Dang xem danh sach chi tieu hoat dong.</span>
+            </div>
+        </section>
+
+        <section class="filter-card">
+            <div class="fw-bold mb-2">Them / Sua chi tieu</div>
+            <input type="hidden" id="expenseId" value="">
+            <div class="form-grid">
+                <div class="field">
+                    <label for="purposeInput">Muc dich</label>
+                    <input id="purposeInput" type="text" placeholder="Thanh toan dien thang 4">
+                </div>
+                <div class="field">
+                    <label for="amountInput">So tien</label>
+                    <input id="amountInput" type="number" step="1000" placeholder="500000">
+                </div>
+                <div class="field">
+                    <label for="expenseDateInput">Ngay chi</label>
+                    <input id="expenseDateInput" type="datetime-local">
+                </div>
+                <div class="field">
+                    <label for="typeInput">Loai</label>
+                    <select id="typeInput">
+                        <option value="other">Khac</option>
+                        <option value="import">Nhap hang</option>
+                        <option value="salary">Luong</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="categoryInput">Danh muc</label>
+                    <select id="categoryInput">
+                        <option value="electric">Dien</option>
+                        <option value="water">Nuoc</option>
+                        <option value="internet">Mang</option>
+                        <option value="office">Van phong</option>
+                        <option value="maintenance">Bao tri</option>
+                        <option value="salary">Luong</option>
+                        <option value="import">Nhap hang</option>
+                        <option value="other" selected>Khac</option>
+                    </select>
+                </div>
+                <div class="field" style="grid-column: span 3;">
+                    <label for="noteInput">Ghi chu</label>
+                    <input id="noteInput" type="text" placeholder="Thanh toan hoa don internet thang nay">
+                </div>
+                <div class="field actions" style="grid-column: span 1; align-self: end;">
+                    <button class="btn-soft" id="saveExpenseBtn" type="button">Luu chi tieu</button>
+                    <button class="btn-soft" id="resetFormBtn" type="button">Lam moi form</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="kpi-grid">
+            <div class="kpi">
+                <div class="kpi-label">Tong ban ghi</div>
+                <div class="kpi-value" id="kpiRows">0</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Tong so tien (thang)</div>
+                <div class="kpi-value val-danger" id="kpiTotal">0 đ</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Nhap hang</div>
+                <div class="kpi-value val-warn" id="kpiImport">0 đ</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Luong</div>
+                <div class="kpi-value val-ok" id="kpiSalary">0 đ</div>
+            </div>
+        </section>
+
+        <section class="table-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="fw-bold">Danh sach chi tieu</div>
+                <div class="small-muted" id="tableSummary">Dang tai du lieu...</div>
+            </div>
+            <div class="table-wrap">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Ngay</th>
+                            <th>Muc dich</th>
+                            <th>Loai</th>
+                            <th>Danh muc</th>
+                            <th>Nhan vien</th>
+                            <th>So tien</th>
+                            <th>Ghi chu</th>
+                            <th>Ref</th>
+                            <th>Thao tac</th>
+                        </tr>
+                    </thead>
+                    <tbody id="expensesBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    const EXPENSE_API = '/api/expenses';
+    const USER_EMPLOYEE_API = '/api/users/employees/get-all.php';
+
+    let currentUser = null;
+    let employees = [];
+    let employeeMap = {};
+    let expenseRows = [];
+    let isEditing = false;
+    let isStaff = false;
+    let currentTrashMode = 'active';
+
+    function formatMoney(value) {
+        return Number(value || 0).toLocaleString('vi-VN') + ' đ';
+    }
+
+    function logout() {
+        localStorage.removeItem('polymart_user');
+        localStorage.removeItem('fashion_user_id');
+        window.location.href = '/login.html';
+    }
+
+    async function fetchJson(url, options = {}) {
+        const res = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options,
+        });
+
+        const text = await res.text();
+        let json = null;
+        try {
+            json = JSON.parse(text);
+        } catch (e) {
+            throw new Error('Invalid JSON response');
+        }
+
+        if (!res.ok || json.success !== true) {
+            throw new Error(json.message || ('HTTP ' + res.status));
+        }
+
+        return json.data;
+    }
+
+    function typeBadge(type) {
+        const t = String(type || 'other').toLowerCase();
+        if (t === 'import') return '<span class="badge-type type-import">Nhap hang</span>';
+        if (t === 'salary') return '<span class="badge-type type-salary">Luong</span>';
+        return '<span class="badge-type type-other">Khac</span>';
+    }
+
+    function categoryLabel(category) {
+        const c = String(category || 'other').toLowerCase();
+        const map = {
+            electric: 'Dien',
+            water: 'Nuoc',
+            internet: 'Mang',
+            office: 'Van phong',
+            maintenance: 'Bao tri',
+            salary: 'Luong',
+            import: 'Nhap hang',
+            other: 'Khac',
+        };
+        return map[c] || c;
+    }
+
+    function renderEmployeeFilter() {
+        const select = document.getElementById('employeeFilter');
+        if (isStaff) {
+            const selfId = Number(currentUser?.ID || 0);
+            const selfName = currentUser?.HOTEN || 'Nhan vien';
+            select.innerHTML = `<option value="${selfId}">#${selfId} - ${selfName}</option>`;
+            select.value = String(selfId);
+            select.disabled = true;
+        } else {
+            select.innerHTML = '<option value="">Tat ca nhan vien</option>' + employees.map((e) => `<option value="${e.id}">#${e.id} - ${e.full_name || 'Nhan vien'}</option>`).join('');
+            select.disabled = false;
+        }
+
+    }
+
+    function getEmployeeName(employeeId) {
+        if (!employeeId) return '-';
+        const row = employeeMap[String(employeeId)];
+        return row ? (row.full_name || ('#' + employeeId)) : ('#' + employeeId);
+    }
+
+    function renderTable() {
+        const body = document.getElementById('expensesBody');
+        const trashMode = currentTrashMode;
+        if (!expenseRows.length) {
+            body.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Khong co du lieu chi tieu</td></tr>';
+            document.getElementById('tableSummary').textContent = '0 ban ghi';
+            return;
+        }
+
+        body.innerHTML = expenseRows.map((row) => `
+            <tr>
+                <td>${row.expense_date || '-'}</td>
+                <td>${row.purpose || '-'}</td>
+                <td>${typeBadge(row.type)}</td>
+                <td>${categoryLabel(row.category)}</td>
+                <td>${getEmployeeName(row.employee_id)}</td>
+                <td class="fw-semibold ${Number(row.amount || 0) < 0 ? 'text-danger' : 'text-success'}">${formatMoney(row.amount)}</td>
+                <td>${row.note || '-'}</td>
+                <td><span class="small-muted">${row.ref_code || '-'}</span></td>
+                <td>
+                    <div class="actions">
+                        ${trashMode === 'trash'
+                            ? `<button class="btn btn-sm btn-outline-success" data-restore="${row.expense_id}">Khoi phuc</button>`
+                            : `<button class="btn btn-sm btn-outline-primary" data-edit="${row.expense_id}">Sua</button><button class="btn btn-sm btn-outline-danger" data-delete="${row.expense_id}">Xoa</button>`}
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('tableSummary').textContent = `${expenseRows.length} ban ghi`;
+    }
+
+    function renderSummary(summary) {
+        const byType = {};
+        (summary.by_type || []).forEach((x) => {
+            byType[String(x.type || 'other')] = x;
+        });
+
+        document.getElementById('kpiRows').textContent = Number(summary.total_rows || 0).toLocaleString('vi-VN');
+        document.getElementById('kpiTotal').textContent = formatMoney(summary.total_amount || 0);
+        document.getElementById('kpiImport').textContent = formatMoney((byType.import || {}).total_amount || 0);
+        document.getElementById('kpiSalary').textContent = formatMoney((byType.salary || {}).total_amount || 0);
+    }
+
+    function buildExpenseUrl() {
+        const month = document.getElementById('monthInput').value;
+        const type = document.getElementById('typeFilter').value;
+        const employeeId = document.getElementById('employeeFilter').value;
+
+        const params = new URLSearchParams();
+        if (month) params.set('month', month);
+        if (type) params.set('type', type);
+        if (isStaff) {
+            params.set('employee_id', String(Number(currentUser?.ID || 0)));
+        } else if (employeeId) {
+            params.set('employee_id', employeeId);
+        }
+        params.set('trash_mode', currentTrashMode);
+
+        return `${EXPENSE_API}/get-all.php?${params.toString()}`;
+    }
+
+    async function loadExpenses() {
+        const month = document.getElementById('monthInput').value;
+        const summary = await fetchJson(`${EXPENSE_API}/summary.php?month=${encodeURIComponent(month)}&trash_mode=${encodeURIComponent(currentTrashMode)}`);
+        renderSummary(summary);
+
+        expenseRows = await fetchJson(buildExpenseUrl());
+        renderTable();
+    }
+
+    function renderTrashTabs() {
+        const activeBtn = document.getElementById('viewActiveBtn');
+        const trashBtn = document.getElementById('viewTrashBtn');
+        const hint = document.getElementById('trashHint');
+
+        const isTrash = currentTrashMode === 'trash';
+        activeBtn.classList.toggle('active', !isTrash);
+        trashBtn.classList.toggle('active', isTrash);
+        hint.textContent = isTrash
+            ? 'Dang xem cac khoan chi tieu da xoa (thung rac).'
+            : 'Dang xem danh sach chi tieu hoat dong.';
+    }
+
+    async function setTrashMode(mode) {
+        if (mode !== 'active' && mode !== 'trash') return;
+        currentTrashMode = mode;
+        renderTrashTabs();
+        await loadExpenses();
+    }
+
+    function resetForm() {
+        isEditing = false;
+        document.getElementById('expenseId').value = '';
+        document.getElementById('purposeInput').value = '';
+        document.getElementById('amountInput').value = '';
+        document.getElementById('expenseDateInput').value = '';
+        document.getElementById('typeInput').value = 'other';
+        document.getElementById('categoryInput').value = 'other';
+        document.getElementById('noteInput').value = '';
+        document.getElementById('saveExpenseBtn').textContent = 'Luu chi tieu';
+    }
+
+    function toDateTimeLocalString(value) {
+        if (!value) return '';
+        return String(value).replace(' ', 'T').slice(0, 16);
+    }
+
+    async function saveExpense() {
+        const selectedEmployeeId = Number(currentUser?.ID || 0);
+
+        const payload = {
+            purpose: document.getElementById('purposeInput').value.trim(),
+            amount: Number(document.getElementById('amountInput').value || 0),
+            type: document.getElementById('typeInput').value,
+            category: document.getElementById('categoryInput').value,
+            employee_id: selectedEmployeeId,
+            note: document.getElementById('noteInput').value.trim(),
+        };
+
+        const expenseDateValue = document.getElementById('expenseDateInput').value;
+        if (expenseDateValue) {
+            payload.expense_date = expenseDateValue.replace('T', ' ') + ':00';
+        }
+
+        if (!payload.purpose) {
+            alert('Vui long nhap muc dich chi tieu.');
+            return;
+        }
+
+        if (payload.amount === 0) {
+            alert('So tien phai khac 0.');
+            return;
+        }
+
+        if (payload.employee_id <= 0) {
+            alert('Khong xac dinh duoc nhan vien dang dang nhap. Vui long dang nhap lai.');
+            return;
+        }
+
+        if (isEditing) {
+            payload.expense_id = Number(document.getElementById('expenseId').value || 0);
+            await fetchJson(`${EXPENSE_API}/update.php`, { method: 'POST', body: JSON.stringify(payload) });
+        } else {
+            await fetchJson(`${EXPENSE_API}/add.php`, { method: 'POST', body: JSON.stringify(payload) });
+        }
+
+        resetForm();
+        await loadExpenses();
+    }
+
+    function startEdit(expenseId) {
+        const row = expenseRows.find((x) => Number(x.expense_id) === Number(expenseId));
+        if (!row) return;
+
+        isEditing = true;
+        document.getElementById('expenseId').value = String(row.expense_id || '');
+        document.getElementById('purposeInput').value = row.purpose || '';
+        document.getElementById('amountInput').value = Number(row.amount || 0);
+        document.getElementById('expenseDateInput').value = toDateTimeLocalString(row.expense_date);
+        document.getElementById('typeInput').value = row.type || 'other';
+        document.getElementById('categoryInput').value = row.category || 'other';
+        document.getElementById('noteInput').value = row.note || '';
+        document.getElementById('saveExpenseBtn').textContent = 'Cap nhat chi tieu';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function moveToTrash(expenseId) {
+        await fetchJson(`${EXPENSE_API}/delete.php`, {
+            method: 'POST',
+            body: JSON.stringify({ expense_id: Number(expenseId) }),
+        });
+        await loadExpenses();
+    }
+
+    async function restoreExpense(expenseId) {
+        await fetchJson(`${EXPENSE_API}/restore.php`, {
+            method: 'POST',
+            body: JSON.stringify({ expense_id: Number(expenseId) }),
+        });
+        await loadExpenses();
+    }
+
+    async function onTableAction(target) {
+        const editId = target.getAttribute('data-edit');
+        const deleteId = target.getAttribute('data-delete');
+        const restoreId = target.getAttribute('data-restore');
+
+        if (editId) {
+            startEdit(Number(editId));
+            return;
+        }
+
+        if (deleteId) {
+            if (!confirm('Ban chac chan muon dua chi tieu nay vao thung rac?')) return;
+            await moveToTrash(Number(deleteId));
+            return;
+        }
+
+        if (restoreId) {
+            await restoreExpense(Number(restoreId));
+        }
+    }
+
+    async function loadEmployees() {
+        if (isStaff) {
+            employees = [{
+                id: Number(currentUser?.ID || 0),
+                full_name: currentUser?.HOTEN || 'Nhan vien',
+            }];
+        } else {
+            employees = await fetchJson(USER_EMPLOYEE_API);
+        }
+        employeeMap = {};
+        employees.forEach((e) => {
+            employeeMap[String(e.id)] = e;
+        });
+        renderEmployeeFilter();
+    }
+
+    (function boot() {
+        const userRaw = localStorage.getItem('polymart_user');
+        if (!userRaw) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        try {
+            currentUser = JSON.parse(userRaw);
+        } catch (e) {
+            logout();
+            return;
+        }
+
+        const role = String(currentUser.ROLE || '').toLowerCase();
+        isStaff = role === 'staff';
+        if (role !== 'admin' && role !== 'staff') {
+            window.location.href = '/manage.html';
+            return;
+        }
+
+        document.getElementById('monthInput').value = new Date().toISOString().slice(0, 7);
+
+        const roleLabel = isStaff ? 'Nhan vien' : 'Quan tri vien';
+        document.getElementById('welcomeText').textContent = `${currentUser.HOTEN || 'Nguoi dung'} • ${roleLabel}`;
+        document.getElementById('roleBadge').innerHTML = `<i class="fa-solid fa-shield-halved"></i><span>${roleLabel}</span>`;
+        document.getElementById('avatarText').textContent = String(currentUser.HOTEN || 'U').trim().charAt(0).toUpperCase();
+        if (isStaff) {
+            document.querySelectorAll('a.menu-item[href="/employees.html"]').forEach((el) => {
+                el.style.display = 'none';
+            });
+        }
+
+        if (isStaff) {
+            const employeeFilterField = document.getElementById('employeeFilter').closest('.field');
+            if (employeeFilterField) employeeFilterField.style.display = 'none';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('refreshBtn').addEventListener('click', function () {
+            Promise.all([loadEmployees(), loadExpenses()]).catch((err) => alert('Khong tai duoc du lieu: ' + err.message));
+        });
+        document.getElementById('viewActiveBtn').addEventListener('click', function () {
+            setTrashMode('active').catch((err) => alert('Khong tai duoc danh sach chi tieu: ' + err.message));
+        });
+        document.getElementById('viewTrashBtn').addEventListener('click', function () {
+            setTrashMode('trash').catch((err) => alert('Khong tai duoc thung rac: ' + err.message));
+        });
+        document.getElementById('applyFilterBtn').addEventListener('click', function () {
+            loadExpenses().catch((err) => alert('Khong tai duoc danh sach chi tieu: ' + err.message));
+        });
+        document.getElementById('saveExpenseBtn').addEventListener('click', function () {
+            saveExpense().catch((err) => alert('Khong luu duoc chi tieu: ' + err.message));
+        });
+        document.getElementById('resetFormBtn').addEventListener('click', resetForm);
+        document.getElementById('expensesBody').addEventListener('click', function (event) {
+            const target = event.target.closest('button[data-edit], button[data-delete], button[data-restore]');
+            if (!target) return;
+            onTableAction(target).catch((err) => alert('Thao tac that bai: ' + err.message));
+        });
+
+        renderTrashTabs();
+
+        Promise.all([loadEmployees(), loadExpenses()]).catch((err) => {
+            alert('Khong tai duoc du lieu chi tieu: ' + err.message);
+        });
+    })();
+</script>
+</body>
+</html>
