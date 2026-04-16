@@ -1,0 +1,13 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "web",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "API_BASE_URL": "@api_base_url"
+  }
+}
