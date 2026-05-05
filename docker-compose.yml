@@ -115,6 +115,27 @@ services:
     networks:
       - fashion-net
 
+  payment-service:
+    build:
+      context: .
+      dockerfile: infra/php-apache/Dockerfile
+    container_name: payment-service
+    restart: unless-stopped
+    ports:
+      - "8089:80"
+    volumes:
+      - ./services/payment-service:/var/www/html
+    environment:
+      DB_HOST: order-db
+      DB_PORT: 3306
+      DB_NAME: order_db
+      DB_USER: order_service
+      DB_PASSWORD: order_pass
+    depends_on:
+      - order-db
+    networks:
+      - fashion-net
+
   inventory-db:
     image: mysql:8.0
     container_name: inventory-db
@@ -272,6 +293,68 @@ services:
     networks:
       - fashion-net
 
+  customer-db:
+    image: mysql:8.0
+    container_name: customer-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: customer_db
+      MYSQL_USER: customer_service
+      MYSQL_PASSWORD: customer_pass
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./databases/customer_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - fashion-net
+
+  customer-service:
+    build:
+      context: .
+      dockerfile: infra/php-apache/Dockerfile
+    container_name: customer-service
+    restart: unless-stopped
+    ports:
+      - "8088:80"
+    volumes:
+      - ./services/customer-service:/var/www/html
+    environment:
+      DB_HOST: customer-db
+      DB_PORT: 3306
+      DB_NAME: customer_db
+      DB_USER: customer_service
+      DB_PASSWORD: customer_pass
+      INTERNAL_API_KEY: polymart-internal-key
+      MAIL_FROM: pk90x123@gmail.com
+      MAIL_FROM_NAME: "UTTMart"
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: "587"
+      SMTP_USER: "pk90x123@gmail.com"
+      SMTP_PASSWORD: "twkw enop cchz wthg"
+    depends_on:
+      - customer-db
+    networks:
+      - fashion-net
+
+  payment-db:
+    image: mysql:8.0
+    container_name: payment-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: payment_db
+      MYSQL_USER: payment_service
+      MYSQL_PASSWORD: payment_pass
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./databases/payment_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - fashion-net
+
   api-gateway:
     image: nginx:1.27-alpine
     container_name: api-gateway
@@ -289,6 +372,8 @@ services:
       - employee-service
       - attendance-service
       - expense-service
+      - customer-service
+      - payment-service
     networks:
       - fashion-net
 

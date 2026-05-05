@@ -200,4 +200,110 @@
     window.ProductHome = {
         loadProducts,
     };
+
+    // Cart functionality
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+    function updateCartDisplay() {
+        const cartItemsEl = document.getElementById('cartItems');
+        const cartTotalEl = document.getElementById('cartTotal');
+        const cartCountEl = document.getElementById('cartCount');
+
+        if (!cartItemsEl || !cartTotalEl || !cartCountEl) return;
+
+        cartItemsEl.innerHTML = '';
+        let total = 0;
+        let count = 0;
+
+        cart.forEach((item, index) => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            count += item.quantity;
+
+            const itemEl = document.createElement('div');
+            itemEl.className = 'd-flex align-items-center mb-3 pb-3 border-bottom';
+            itemEl.innerHTML = `
+                <img src="${item.img}" alt="${item.name}" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${item.name}</h6>
+                    <p class="mb-1 text-danger">${formatCurrency(item.price)} x ${item.quantity}</p>
+                    <small class="text-muted">${formatCurrency(itemTotal)}</small>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            cartItemsEl.appendChild(itemEl);
+        });
+
+        cartTotalEl.textContent = formatCurrency(total);
+        cartCountEl.textContent = count;
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }
+
+    window.addToCart = function(productId, detailId, name, price, image, quantity, stock) {
+        const existingItem = cart.find(item => item.detail_id === detailId);
+        if (existingItem) {
+            if (existingItem.quantity + quantity > stock) {
+                alert('Không đủ hàng trong kho!');
+                return;
+            }
+            existingItem.quantity += quantity;
+        } else {
+            cart.push({
+                product_id: productId,
+                detail_id: detailId,
+                name,
+                price,
+                img: image,
+                quantity,
+                stock
+            });
+        }
+        updateCartDisplay();
+        alert('Đã thêm vào giỏ hàng!');
+    };
+
+    window.removeFromCart = function(index) {
+        cart.splice(index, 1);
+        updateCartDisplay();
+        localStorage.setItem('cart', JSON.stringify(cart));
+    };
+
+    window.clearCart = function() {
+        cart = [];
+        updateCartDisplay();
+        localStorage.setItem('cart', JSON.stringify(cart));
+    };
+
+    window.checkout = function() {
+        if (cart.length === 0) {
+            alert('Giỏ hàng trống!');
+            return;
+        }
+
+        // Calculate total
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        // Prepare order data
+        const orderData = {
+            items: cart.map(item => ({
+                product_id: item.productId,
+                detail_id: item.detailId,
+                quantity: item.quantity,
+                price: item.price,
+                name: item.name
+            })),
+            total: total
+        };
+
+        // Redirect to payment page with cart data
+        const params = new URLSearchParams({
+            cart: JSON.stringify(orderData)
+        });
+        window.location.href = `payment.html?${params.toString()}`;
+    };
+
+    // Initialize cart display
+    updateCartDisplay();
 })();

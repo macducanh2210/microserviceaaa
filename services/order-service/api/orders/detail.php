@@ -8,20 +8,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     jsonResponse(405, ['success' => false, 'message' => 'Method not allowed. Use GET.', 'data' => null]);
 }
 
-$userId = isset($_GET['user_id']) ? (int) $_GET['user_id'] : 0;
-$orderId = isset($_GET['order_id']) ? (int) $_GET['order_id'] : 0;
+$customerId = isset($_GET['customer_id']) ? (int) $_GET['customer_id'] : 0;
+$userId     = isset($_GET['user_id'])     ? (int) $_GET['user_id']     : 0;
+$orderId    = isset($_GET['order_id'])    ? (int) $_GET['order_id']    : (isset($_GET['id']) ? (int) $_GET['id'] : 0);
 
-if ($userId <= 0 || $orderId <= 0) {
-    jsonResponse(400, ['success' => false, 'message' => 'user_id hoặc order_id không hợp lệ.', 'data' => null]);
+if (($customerId <= 0 && $userId <= 0) || $orderId <= 0) {
+    jsonResponse(400, ['success' => false, 'message' => 'Cần cung cấp customer_id hoặc user_id, và order_id.', 'data' => null]);
 }
 
-$requester = os_requireRoleByUserId($userId, ['customer', 'staff', 'admin']);
-$requesterRole = (string) ($requester['role'] ?? 'customer');
+if ($customerId > 0) {
+    // ── CUSTOMER FLOW ──────────────────────────────────────────────────────────
+    os_requireInternalKey();
+    $requesterRole = 'customer';
+} else {
+    // ── STAFF / ADMIN FLOW ─────────────────────────────────────────────────────
+    $requester     = os_requireRoleByUserId($userId, ['staff', 'admin']);
+    $requesterRole = (string) ($requester['role'] ?? 'staff');
+}
 
 try {
     $pdo = getPDO();
     $order = $requesterRole === 'customer'
-        ? os_getOrderOwnedByUser($pdo, $orderId, $userId)
+        ? os_getOrderOwnedByUser($pdo, $orderId, $customerId)
         : os_getOrderById($pdo, $orderId);
 
     if (!$order) {
@@ -39,6 +47,18 @@ try {
                 $snapshotItems[$key] = $it;
             }
         }
+    }
+
+    // Extract payment information from both database columns and snapshot
+    $paymentMethod = $order['PAYMENT_METHOD'] ?? null;
+    $paymentStatus = $order['PAYMENT_STATUS'] ?? null;
+    
+    // Fallback to snapshot data if database columns are empty
+    if (!$paymentMethod && is_array($snapshot)) {
+        $paymentMethod = $snapshot['payment_method'] ?? null;
+    }
+    if (!$paymentStatus && is_array($snapshot)) {
+        $paymentStatus = $snapshot['payment_status'] ?? 'paid'; // Default to paid for completed orders
     }
 
     $items = [];
@@ -70,6 +90,9 @@ try {
             'order_date' => $order['NGAYTHANHTOAN'],
             'active' => (int) $order['TREMOVE'] === 1,
             'total_amount' => $total,
+            'payment_method' => $paymentMethod,
+            'payment_status' => $paymentStatus,
+            'shipping_address' => $snapshot['shipping_address'] ?? null,
             'items' => $items,
         ],
     ]);

@@ -130,7 +130,16 @@
         const ORDER_API_BASE = '/api/orders';
         const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500';
         
-        let cart = []; 
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const CUSTOMER_API_BASE = '/api/customers';
+
+        function getCustomerId() {
+            return localStorage.getItem('customer_id');
+        }
+
+        function isCustomerLoggedIn() {
+            return !!getCustomerId();
+        }
         let currentProductDetail = null;
 
         async function loadProducts() {
@@ -192,6 +201,34 @@
         });
 
         function addToCart(productId, detailId, name, price, img, quantity, stock) {
+            if (isCustomerLoggedIn()) {
+                // Use customer cart API
+                addToCustomerCart(productId, detailId, name, price, quantity);
+            } else {
+                // Use localStorage cart
+                addToLocalCart(productId, detailId, name, price, img, quantity, stock);
+            }
+        }
+
+        async function addToCustomerCart(productId, detailId, name, price, quantity) {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${getCustomerId()}/cart/add.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId, detail_id: detailId, name, price, quantity })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadCustomerCart();
+                } else {
+                    alert(data.message || 'Không thể thêm vào giỏ hàng');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối!');
+            }
+        }
+
+        function addToLocalCart(productId, detailId, name, price, img, quantity, stock) {
             productId = Number(productId);
             detailId = Number(detailId);
             quantity = Number(quantity);
@@ -223,9 +260,44 @@
             renderCart();
         }
 
-        function updateQuantity(productId, change) {
+        function updateQuantity(productId, change, detailId) {
+            if (isCustomerLoggedIn()) {
+                updateCustomerCartQuantity(productId, change, detailId);
+            } else {
+                updateLocalCartQuantity(productId, change, detailId);
+            }
+        }
+
+        async function updateCustomerCartQuantity(productId, change, detailId) {
+            try {
+                // To send PUT with absolute quantity, find the item's current quantity
+                let item = cart.find(i => i.product_id === productId && (i.detail_id || 0) === (detailId || 0));
+                if (!item) return;
+                let newQty = item.quantity + change;
+                if (newQty <= 0) {
+                    return removeFromCustomerCart(productId, detailId);
+                }
+
+                const res = await fetch(`${CUSTOMER_API_BASE}/${getCustomerId()}/cart/update.php`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId, detail_id: detailId || 0, quantity: newQty })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadCustomerCart();
+                } else {
+                    alert(data.message || 'Không thể cập nhật số lượng');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối!');
+            }
+        }
+
+        function updateLocalCartQuantity(productId, change, detailId) {
             productId = Number(productId);
-            let item = cart.find(i => i.product_id === productId);
+            detailId = Number(detailId || 0);
+            let item = cart.find(i => i.product_id === productId && (i.detail_id || 0) === detailId);
             if(item) {
                 let newQty = item.quantity + change;
                 if(newQty > item.stock) {
@@ -233,15 +305,56 @@
                     return;
                 }
                 item.quantity = newQty;
-                if(item.quantity <= 0) cart = cart.filter(i => i.product_id !== productId); 
+                if(item.quantity <= 0) cart = cart.filter(i => !(i.product_id === productId && (i.detail_id || 0) === detailId)); 
                 renderCart();
             }
         }
 
-        function removeFromCart(productId) {
+        function removeFromCart(productId, detailId) {
+            if (isCustomerLoggedIn()) {
+                removeFromCustomerCart(productId, detailId);
+            } else {
+                removeFromLocalCart(productId, detailId);
+            }
+        }
+
+        async function removeFromCustomerCart(productId, detailId) {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${getCustomerId()}/cart/remove.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId, detail_id: detailId || 0 })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadCustomerCart();
+                } else {
+                    alert(data.message || 'Không thể xóa sản phẩm');
+                }
+            } catch (e) {
+                alert('Lỗi kết nối!');
+            }
+        }
+
+        function removeFromLocalCart(productId, detailId) {
             productId = Number(productId);
-            cart = cart.filter(i => i.product_id !== productId);
+            detailId = Number(detailId || 0);
+            cart = cart.filter(i => !(i.product_id === productId && (i.detail_id || 0) === detailId));
             renderCart();
+        }
+
+        async function loadCustomerCart() {
+            if (!isCustomerLoggedIn()) return;
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${getCustomerId()}/cart/index.php`);
+                const data = await res.json();
+                if (data.success) {
+                    cart = data.data.items || [];
+                    renderCart();
+                }
+            } catch (e) {
+                console.error('Lỗi load cart:', e);
+            }
         }
 
         function renderCart() {
@@ -256,24 +369,36 @@
                             <h6 class="mb-1" style="font-size: 0.9rem;">${item.name}</h6>
                             <p class="text-danger mb-1 fw-bold">${item.price.toLocaleString('vi-VN')} ₫</p>
                             <div class="d-flex align-items-center">
-                                <button class="btn btn-sm btn-light px-2 py-0 border" onclick="updateQuantity(${item.product_id}, -1)">-</button>
+                                <button class="btn btn-sm btn-light px-2 py-0 border" onclick="updateQuantity(${item.product_id}, -1, ${item.detail_id || 0})">-</button>
                                 <span class="mx-2 small text-center" style="width:20px;">${item.quantity}</span>
-                                <button class="btn btn-sm btn-light px-2 py-0 border" onclick="updateQuantity(${item.product_id}, 1)">+</button>
+                                <button class="btn btn-sm btn-light px-2 py-0 border" onclick="updateQuantity(${item.product_id}, 1, ${item.detail_id || 0})">+</button>
                             </div>
                         </div>
-                        <button class="btn text-danger px-2" onclick="removeFromCart(${item.product_id})"><i class="fa fa-trash"></i></button>
+                        <button class="btn text-danger px-2" onclick="removeFromCart(${item.product_id}, ${item.detail_id || 0})"><i class="fa fa-trash"></i></button>
                     </div>
                 `;
             });
             document.getElementById('cartItems').innerHTML = html || '<p class="text-center text-muted mt-5">Giỏ hàng trống</p>';
             document.getElementById('cartTotal').innerText = total.toLocaleString('vi-VN') + ' ₫';
             document.getElementById('cartCount').innerText = count;
+            localStorage.setItem('cart', JSON.stringify(cart));
         }
 
         function checkAuth() {
+            const customerId = getCustomerId();
+            const customerInfo = JSON.parse(localStorage.getItem('customer_info') || 'null');
             const user = JSON.parse(localStorage.getItem('polymart_user'));
             const userMenu = document.getElementById('userMenu');
-            if(user) {
+
+            if (customerId && customerInfo) {
+                // Customer logged in
+                userMenu.innerHTML = `
+                    <span class="fw-bold fs-6">Chào, ${customerInfo.full_name}</span>
+                    <button class="btn btn-sm btn-dark mx-2" onclick="openCustomerProfilePage()">Tài Khoản</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="logoutCustomer()">Thoát</button>
+                `;
+            } else if (user) {
+                // Employee/Manager logged in
                 const role = String(user.ROLE || 'customer').toLowerCase();
                 const managementBtn = (role === 'admin' || role === 'staff')
                     ? `<button class="btn btn-sm btn-outline-dark mx-2" onclick="openManagementPage()">Quản Lý</button>`
@@ -289,8 +414,22 @@
             }
         }
 
+        // openCustomerProfile removed – replaced by openCustomerProfilePage below
+
+        function logoutCustomer() {
+            localStorage.removeItem('customer_id');
+            localStorage.removeItem('customer_info');
+            cart = [];
+            renderCart();
+            checkAuth();
+        }
+
         function openLoginPage() {
             window.location.href = '/login.html';
+        }
+
+        function openCustomerProfilePage() {
+            window.location.href = '/customer-profile.html';
         }
 
         function openOrdersPage() {
@@ -301,12 +440,53 @@
             window.location.href = '/manage.html';
         }
 
-        function logout() { localStorage.removeItem('polymart_user'); checkAuth(); }
+        function logout() {
+            localStorage.removeItem('polymart_user');
+            localStorage.removeItem('fashion_user_id');
+            cart = [];
+            renderCart();
+            checkAuth();
+        }
 
         async function checkout() {
+            if (isCustomerLoggedIn()) {
+                await checkoutCustomerCart();
+            } else {
+                await checkoutEmployeeCart();
+            }
+        }
+
+        async function checkoutCustomerCart() {
+            // Read cart from localStorage to ensure we get items added by main.js
+            const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+            if(storedCart.length === 0) return alert('Giỏ hàng trống!');
+            
+            // Prepare cart data to pass to payment page
+            const total = storedCart.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0);
+            const orderData = {
+                items: storedCart.map(item => ({
+                    product_id: item.product_id || 0,
+                    detail_id: item.detail_id || 0,
+                    quantity: item.quantity,
+                    price: item.price,
+                    name: item.name
+                })),
+                total: total
+            };
+            
+            // Redirect to payment page with cart data
+            const params = new URLSearchParams({
+                cart: encodeURIComponent(JSON.stringify(orderData))
+            });
+            window.location.href = `payment.html?${params.toString()}`;
+        }
+
+        async function checkoutEmployeeCart() {
             const user = JSON.parse(localStorage.getItem('polymart_user'));
             if(!user) return openLoginPage();
-            if(cart.length === 0) return alert('Giỏ hàng trống!');
+
+            const storedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+            if(storedCart.length === 0) return alert('Giỏ hàng trống!');
 
             const userId = Number(user.ID ?? user.user_id ?? user.id ?? localStorage.getItem('fashion_user_id'));
             if (!Number.isInteger(userId) || userId <= 0) {
@@ -319,7 +499,7 @@
             try {
                 const payload = {
                     user_id: userId,
-                    items: cart
+                    items: storedCart
                         .map(item => {
                             const productId = Number(item.product_id);
                             const detailId = Number(item.detail_id);
@@ -359,13 +539,13 @@
                     },
                     body: JSON.stringify(payload)
                 });
-                
+
                 const text = await res.text();
                 try {
                     const data = JSON.parse(text);
                     if(data.success === true) {
                         alert(data.message);
-                        cart = []; 
+                        cart = [];
                         renderCart();
                         bootstrap.Offcanvas.getInstance(document.getElementById('cartOffcanvas')).hide();
                         loadProducts();
@@ -377,8 +557,8 @@
                     console.error("Lỗi parse JSON:", text);
                     alert("Lỗi từ CSDL (Chi tiết trong F12 Console)");
                 }
-            } catch(e) { 
-                alert("Mất kết nối với Server!"); 
+            } catch(e) {
+                alert("Mất kết nối với Server!");
             }
         }
 
@@ -437,6 +617,7 @@
         }
 
         checkAuth();
+        loadCustomerCart();
         loadProducts();
     </script>
 </body>

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập Khách Hàng - UTTMart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-wrapper {
+            width: 100%;
+            max-width: 480px;
+        }
+        .brand-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .brand-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+        .brand-header h1 span { color: #ff3300; }
+        .brand-header p {
+            color: rgba(255,255,255,0.5);
+            margin-top: 6px;
+            font-size: 0.9rem;
+        }
+        .auth-card {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+        .card-body { padding: 32px; }
+        .step { display: none; }
+        .step.active { display: block; }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #444;
+            margin-bottom: 6px;
+        }
+        .form-control {
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus {
+            border-color: #ff3300;
+            box-shadow: 0 0 0 3px rgba(255,51,0,0.1);
+        }
+        .btn-main {
+            background: #1a1a1a;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            padding: 13px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            width: 100%;
+            transition: background 0.2s;
+            letter-spacing: 0.5px;
+        }
+        .btn-main:hover { background: #ff3300; }
+        .btn-outline-toggle {
+            background: transparent;
+            color: #555;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 11px;
+            font-size: 0.88rem;
+            width: 100%;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .btn-outline-toggle:hover {
+            border-color: #1a1a1a;
+            color: #1a1a1a;
+        }
+        .error-msg {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            min-height: 18px;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0;
+            color: #aaa;
+            font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e8e8e8;
+        }
+        .otp-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .otp-input {
+            width: 50px; height: 56px;
+            font-size: 1.4rem; font-weight: 700;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .otp-input:focus { border-color: #ff3300; }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .back-link:hover { color: #ff3300; }
+        .section-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+        .section-sub {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 22px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="brand-header">
+            <h1>UTT<span>MART</span></h1>
+            <p>Hệ thống quản lý thời trang</p>
+        </div>
+
+        <div class="auth-card">
+            <div class="card-body">
+
+                <!-- Step: Login -->
+                <div id="cusLoginStep" class="step active">
+                    <div class="section-title">Đăng nhập</div>
+                    <div class="section-sub">Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.</div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="cusLoginEmail" class="form-control" placeholder="you@example.com">
+                        <div class="error-msg" id="cusLoginEmailErr"></div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Mật khẩu</label>
+                        <input type="password" id="cusLoginPwd" class="form-control" placeholder="Nhập mật khẩu">
+                        <div class="error-msg" id="cusLoginPwdErr"></div>
+                    </div>
+                    <button class="btn-main mb-3" onclick="doCustomerLogin()">
+                        <i class="fa fa-right-to-bracket me-2"></i>Đăng Nhập
+                    </button>
+                    <div class="divider">hoặc</div>
+                    <button class="btn-outline-toggle mb-2" onclick="showStep('cusRegStep')">
+                        Chưa có tài khoản? <strong>Đăng ký ngay</strong>
+                    </button>
+                    <button class="btn-outline-toggle" onclick="showStep('cusForgotStep')">
+                        Quên mật khẩu? <strong>Đặt lại</strong>
+                    </button>
+                </div>
+
+                <!-- Step: Register -->
+                <div id="cusRegStep" class="step">
+                    <div class="section-title">Tạo tài khoản</div>
+                    <div class="section-sub">Điền thông tin để tạo tài khoản mới.</div>
+                    <div class="mb-3">
+                        <label class="form-label">Họ và tên</label>
+                        <input type="text" id="cusRegName" class="form-control" placeholder="Nguyễn Văn A">
+                        <div class="error-msg" id="cusRegNameErr"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="cusRegEmail" class="form-control" placeholder="you@example.com">
+                        <div class="error-msg" id="cusRegEmailErr"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số điện thoại</label>
+                        <input type="tel" id="cusRegPhone" class="form-control" placeholder="0123456789">
+                        <div class="error-msg" id="cusRegPhoneErr"></div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Mật khẩu</label>
+                        <input type="password" id="cusRegPwd" class="form-control" placeholder="Ít nhất 6 ký tự">
+                        <div class="error-msg" id="cusRegPwdErr"></div>
+                    </div>
+                    <button class="btn-main mb-3" onclick="doCustomerRegister()">
+                        <i class="fa fa-user-plus me-2"></i>Tiếp Tục
+                    </button>
+                    <div class="divider">hoặc</div>
+                    <button class="btn-outline-toggle" onclick="showStep('cusLoginStep')">
+                        Đã có tài khoản? <strong>Đăng nhập</strong>
+                    </button>
+                </div>
+
+                <!-- Step: Forgot Password -->
+                <div id="cusForgotStep" class="step">
+                    <div class="section-title">Quên mật khẩu</div>
+                    <div class="section-sub">Nhập email để nhận mã OTP đặt lại mật khẩu.</div>
+                    <div class="mb-4">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="cusForgotEmail" class="form-control" placeholder="you@example.com">
+                        <div class="error-msg" id="cusForgotEmailErr"></div>
+                    </div>
+                    <button class="btn-main mb-3" onclick="doForgotPassword()">
+                        <i class="fa fa-paper-plane me-2"></i>Gửi Mã OTP
+                    </button>
+                    <div class="divider">hoặc</div>
+                    <button class="btn-outline-toggle" onclick="showStep('cusLoginStep')">
+                        Quay lại <strong>Đăng nhập</strong>
+                    </button>
+                </div>
+
+                <!-- Step: Reset Password -->
+                <div id="cusResetStep" class="step">
+                    <div class="section-title">Đặt lại mật khẩu</div>
+                    <div class="section-sub">Nhập mã OTP và mật khẩu mới.</div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="cusResetEmail" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mã OTP</label>
+                        <input type="text" id="cusResetOtp" class="form-control" placeholder="123456" maxlength="6">
+                        <div class="error-msg" id="cusResetOtpErr"></div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Mật khẩu mới</label>
+                        <input type="password" id="cusResetPwd" class="form-control" placeholder="Ít nhất 6 ký tự">
+                        <div class="error-msg" id="cusResetPwdErr"></div>
+                    </div>
+                    <button class="btn-main mb-3" onclick="doResetPassword()">
+                        <i class="fa fa-key me-2"></i>Đặt Lại Mật Khẩu
+                    </button>
+                    <div class="divider">hoặc</div>
+                    <button class="btn-outline-toggle" onclick="showStep('cusForgotStep')">
+                        Gửi lại <strong>Mã OTP</strong>
+                    </button>
+                </div>
+
+                <!-- Step: OTP for Register -->
+                <div id="cusOtpStep" class="step">
+                    <div class="section-title text-center">Xác nhận Email</div>
+                    <div class="section-sub text-center">
+                        Mã OTP đã được gửi đến<br><strong id="cusOtpEmail" style="color:#1a1a1a"></strong>
+                    </div>
+                    <div class="otp-inputs">
+                        <input type="text" class="otp-input" maxlength="1" id="otp1">
+                        <input type="text" class="otp-input" maxlength="1" id="otp2">
+                        <input type="text" class="otp-input" maxlength="1" id="otp3">
+                        <input type="text" class="otp-input" maxlength="1" id="otp4">
+                        <input type="text" class="otp-input" maxlength="1" id="otp5">
+                        <input type="text" class="otp-input" maxlength="1" id="otp6">
+                    </div>
+                    <div class="error-msg text-center mb-3" id="otpErr"></div>
+                    <button class="btn-main mb-3" onclick="doVerifyOtp()">
+                        <i class="fa fa-check me-2"></i>Xác Nhận
+                    </button>
+                    <div class="text-center" style="font-size:0.85rem; color:#888">
+                        Chưa nhận được mã?
+                        <button onclick="doResendOtp()" style="background:none;border:none;color:#ff3300;font-weight:600;cursor:pointer;padding:0">Gửi lại</button>
+                        <span id="resendTimer"></span>
+                    </div>
+                </div>
+
+            </div><!-- /card-body -->
+        </div><!-- /auth-card -->
+
+        <a href="/" class="back-link"><i class="fa fa-arrow-left me-1"></i> Quay lại trang chủ</a>
+    </div>
+
+    <script>
+        const CUSTOMER_API = '/api/customers';
+
+        let pendingReg = null;
+        let pendingReset = null;
+
+        function showStep(stepId) {
+            ['cusLoginStep', 'cusRegStep', 'cusForgotStep', 'cusResetStep', 'cusOtpStep'].forEach(id => {
+                document.getElementById(id).classList.toggle('active', id === stepId);
+            });
+        }
+
+        async function doCustomerLogin() {
+            const email = val('cusLoginEmail');
+            const password = val('cusLoginPwd');
+
+            clearErr(['cusLoginEmailErr', 'cusLoginPwdErr']);
+            if (!email) return setErr('cusLoginEmailErr', 'Email không được để trống');
+            if (!password) return setErr('cusLoginPwdErr', 'Mật khẩu không được để trống');
+
+            try {
+                const res = await fetch(`${CUSTOMER_API}/login.php`, post({ email, password }));
+                const data = await res.json();
+                if (!data.success) return setErr('cusLoginEmailErr', data.message || 'Đăng nhập thất bại');
+
+                localStorage.setItem('customer_id', String(data.customer_id));
+                localStorage.setItem('customer_info', JSON.stringify({
+                    id: data.customer_id,
+                    full_name: data.full_name,
+                    email: data.email,
+                    loyalty_points: data.loyalty_points
+                }));
+
+                window.location.href = '/';
+            } catch (e) {
+                setErr('cusLoginEmailErr', 'Lỗi kết nối. Vui lòng thử lại.');
+            }
+        }
+
+        async function doCustomerRegister() {
+            const fullName = val('cusRegName');
+            const email = val('cusRegEmail');
+            const phone = val('cusRegPhone');
+            const password = val('cusRegPwd');
+
+            clearErr(['cusRegNameErr','cusRegEmailErr','cusRegPhoneErr','cusRegPwdErr']);
+            let ok = true;
+            if (!fullName) { setErr('cusRegNameErr', 'Tên không được để trống'); ok = false; }
+            if (!email) { setErr('cusRegEmailErr', 'Email không được để trống'); ok = false; }
+            else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr('cusRegEmailErr', 'Email không hợp lệ'); ok = false; }
+            if (!phone) { setErr('cusRegPhoneErr', 'Số điện thoại không được để trống'); ok = false; }
+            if (!password || password.length < 6) { setErr('cusRegPwdErr', 'Mật khẩu phải có ít nhất 6 ký tự'); ok = false; }
+            if (!ok) return;
+
+            try {
+                const res = await fetch(`${CUSTOMER_API}/register.php`, post({ email, password, fullname: fullName, phone }));
+                const data = await res.json();
+                if (!data.success) return setErr('cusRegEmailErr', data.message || 'Đăng ký thất bại');
+
+                pendingReg = { email, fullName, phone };
+                document.getElementById('cusOtpEmail').textContent = email;
+                showStep('cusOtpStep');
+            } catch (e) {
+                setErr('cusRegEmailErr', 'Lỗi kết nối. Vui lòng thử lại.');
+            }
+        }
+
+        async function doForgotPassword() {
+            const email = val('cusForgotEmail');
+
+            clearErr(['cusForgotEmailErr']);
+            if (!email) return setErr('cusForgotEmailErr', 'Email không được để trống');
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setErr('cusForgotEmailErr', 'Email không hợp lệ');
+
+            try {
+                const res = await fetch(`${CUSTOMER_API}/forgot-password.php`, post({ email }));
+                const data = await res.json();
+                if (!data.success) return setErr('cusForgotEmailErr', data.message || 'Gửi OTP thất bại');
+
+                pendingReset = { email };
+                document.getElementById('cusResetEmail').value = email;
+                showStep('cusResetStep');
+                alert('Mã OTP đã được gửi đến email của bạn.');
+            } catch (e) {
+                setErr('cusForgotEmailErr', 'Lỗi kết nối. Vui lòng thử lại.');
+            }
+        }
+
+        async function doResetPassword() {
+            const email = val('cusResetEmail');
+            const otp = val('cusResetOtp');
+            const newPassword = val('cusResetPwd');
+
+            clearErr(['cusResetOtpErr', 'cusResetPwdErr']);
+            if (!otp || otp.length !== 6) return setErr('cusResetOtpErr', 'OTP phải là 6 chữ số');
+            if (!newPassword || newPassword.length < 6) return setErr('cusResetPwdErr', 'Mật khẩu mới phải có ít nhất 6 ký tự');
+
+            try {
+                const res = await fetch(`${CUSTOMER_API}/reset-password.php`, post({ email, otp, new_password: newPassword }));
+                const data = await res.json();
+                if (!data.success) return setErr('cusResetOtpErr', data.message || 'Đặt lại mật khẩu thất bại');
+
+                alert('Mật khẩu đã được đặt lại thành công! Vui lòng đăng nhập.');
+                pendingReset = null;
+                showStep('cusLoginStep');
+            } catch (e) {
+                setErr('cusResetOtpErr', 'Lỗi kết nối. Vui lòng thử lại.');
+            }
+        }
+
+        async function doVerifyOtp() {
+            const otp = Array.from(document.querySelectorAll('.otp-input')).map(el => el.value).join('');
+            document.getElementById('otpErr').textContent = '';
+            if (otp.length !== 6) return document.getElementById('otpErr').textContent = 'Vui lòng nhập đủ 6 chữ số OTP';
+
+            try {
+                const res = await fetch(`${CUSTOMER_API}/verify-otp.php`, post({ email: pendingReg.email, otp }));
+                const data = await res.json();
+                if (!data.success) return document.getElementById('otpErr').textContent = data.message || 'Xác nhận OTP thất bại';
+
+                alert('Xác nhận email thành công! Vui lòng đăng nhập.');
+                document.getElementById('cusLoginEmail').value = pendingReg.email;
+                pendingReg = null;
+                showStep('cusLoginStep');
+            } catch (e) {
+                document.getElementById('otpErr').textContent = 'Lỗi kết nối. Vui lòng thử lại.';
+            }
+        }
+
+        async function doResendOtp() {
+            if (!pendingReg) return;
+            try {
+                await fetch(`${CUSTOMER_API}/register.php`, post({
+                    email: pendingReg.email, password: '', fullname: pendingReg.fullName, phone: pendingReg.phone
+                }));
+                alert('OTP mới đã được gửi. Vui lòng kiểm tra email.');
+            } catch (e) { alert('Gửi lại OTP thất bại.'); }
+        }
+
+        function val(id) { return document.getElementById(id).value.trim(); }
+        function setErr(id, msg) { document.getElementById(id).textContent = msg; }
+        function clearErr(ids) { ids.forEach(id => document.getElementById(id).textContent = ''); }
+        function post(body) {
+            return { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+        }
+
+        document.querySelectorAll('.otp-input').forEach((input, idx, all) => {
+            input.addEventListener('input', e => {
+                if (e.target.value && idx < all.length - 1) all[idx + 1].focus();
+            });
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Backspace' && !input.value && idx > 0) all[idx - 1].focus();
+            });
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Enter') return;
+            const active = document.querySelector('.step.active');
+            if (!active) return;
+            if (active.id === 'cusLoginStep') doCustomerLogin();
+            else if (active.id === 'cusRegStep') doCustomerRegister();
+            else if (active.id === 'cusForgotStep') doForgotPassword();
+            else if (active.id === 'cusResetStep') doResetPassword();
+            else if (active.id === 'cusOtpStep') doVerifyOtp();
+        });
+    </script>
+</body>
+</html>

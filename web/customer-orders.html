@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn Hàng - UTTMart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fcfcfc; }
+        .navbar { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .order-card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #ff3300; }
+        .order-status { font-weight: 600; padding: 5px 10px; border-radius: 5px; font-size: 0.875rem; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="/">UTT<span style="color:#ff3300">MART</span></a>
+            <div class="d-flex align-items-center gap-3">
+                <span id="userGreeting" class="text-muted"></span>
+                <a href="/customer-profile.html" class="btn btn-outline-dark btn-sm">Hồ Sơ</a>
+                <button onclick="logout()" class="btn btn-outline-danger btn-sm">Thoát</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h2 class="fw-bold mb-4">Đơn Hàng Của Tôi</h2>
+        
+        <div id="orderList"></div>
+    </div>
+
+    <!-- ORDER DETAIL MODAL -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chi Tiết Đơn Hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="orderDetailContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let customerId = null;
+        let ORDER_API_BASE = '';
+
+        function init() {
+            customerId = localStorage.getItem('customer_id');
+            if (!customerId) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            ORDER_API_BASE = `/api/customers/${customerId}/orders`;
+
+            const customerInfo = JSON.parse(localStorage.getItem('customer_info') || '{}');
+            document.getElementById('userGreeting').textContent = `Chào, ${customerInfo.full_name || ''}`;
+
+            loadOrders();
+        }
+
+        async function loadOrders() {
+            try {
+                const res = await fetch(ORDER_API_BASE, { 
+                    credentials: 'include',
+                    headers: {
+                        'X-Customer-ID': customerId
+                    }
+                });
+                const data = await res.json();
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    const orderList = document.getElementById('orderList');
+                    orderList.innerHTML = data.data.map(order => `
+                        <div class="order-card">
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <h6 class="fw-bold">Đơn hàng #${order.order_id}</h6>
+                                    <p class="text-muted small mb-0">Ngày: ${formatDate(order.order_date)}</p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <span class="order-status ${order.active ? 'status-completed' : 'status-cancelled'}">${order.active ? 'Hoàn thành' : 'Đã hủy'}</span>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <p class="mb-2"><small><strong>Số sản phẩm:</strong> ${order.item_count}</small></p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <p class="fw-bold text-danger mb-0">${formatPrice(order.total_amount)}</p>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-outline-dark mt-3" onclick="viewOrderDetail(${order.order_id})">Xem Chi Tiết</button>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('orderList').innerHTML = '<div class="alert alert-info">Chưa có đơn hàng nào</div>';
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('orderList').innerHTML = '<div class="alert alert-danger">Lỗi tải đơn hàng</div>';
+            }
+        }
+
+        async function viewOrderDetail(orderId) {
+            try {
+                const res = await fetch(`${ORDER_API_BASE}/${orderId}`, { 
+                    credentials: 'include',
+                    headers: {
+                        'X-Customer-ID': customerId
+                    }
+                });
+                const data = await res.json();
+                
+                if (data.success && data.data) {
+                    const order = data.data;
+                    const items = order.items || [];
+                    const shippingAddress = order.shipping_address;
+                    const paymentMethod = order.payment_method;
+                    const paymentStatus = order.payment_status;
+                    
+                    document.getElementById('orderDetailContent').innerHTML = `
+                        <div class="mb-4">
+                            <h6 class="fw-bold">Thông Tin Đơn Hàng</h6>
+                            <p class="mb-1"><strong>Mã đơn:</strong> ${order.order_id}</p>
+                            <p class="mb-1"><strong>Ngày đặt:</strong> ${formatDate(order.order_date)}</p>
+                            <p class="mb-1"><strong>Trạng thái:</strong> <span class="order-status ${order.active ? 'status-completed' : 'status-cancelled'}">${order.active ? 'Hoàn thành' : 'Đã hủy'}</span></p>
+                            <p class="mb-1"><strong>Phương thức thanh toán:</strong> ${formatPaymentMethod(paymentMethod)}</p>
+                            <p class="mb-0"><strong>Trạng thái thanh toán:</strong> <span class="badge ${paymentStatus === 'paid' ? 'bg-success' : 'bg-warning'}">${formatPaymentStatus(paymentStatus)}</span></p>
+                        </div>
+
+                        ${shippingAddress ? `
+                        <div class="mb-4">
+                            <h6 class="fw-bold">Địa Chỉ Giao Hàng</h6>
+                            <div class="border rounded p-3 bg-light">
+                                <p class="mb-1"><strong>${shippingAddress.name || 'Địa chỉ'}</strong></p>
+                                <p class="mb-1">${shippingAddress.address_detail}, ${shippingAddress.ward}, ${shippingAddress.district}, ${shippingAddress.city}</p>
+                                <p class="mb-0"><strong>SĐT:</strong> ${shippingAddress.phone || 'N/A'}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="mb-4">
+                            <h6 class="fw-bold">Sản Phẩm</h6>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Sản Phẩm</th>
+                                        <th>Số Lượng</th>
+                                        <th>Giá</th>
+                                        <th>Thành Tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.map(item => `
+                                        <tr>
+                                            <td>Sản phẩm #${item.product_id || 'N/A'}</td>
+                                            <td>${item.quantity || 0}</td>
+                                            <td>${formatPrice(item.unit_price || 0)}</td>
+                                            <td>${formatPrice(item.line_total || 0)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <p><strong>Tổng cộng:</strong></p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <p class="fw-bold text-danger">${formatPrice(order.total_amount || 0)}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Lỗi tải chi tiết đơn hàng');
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
+        }
+
+        function formatPaymentMethod(method) {
+            const methods = {
+                'cod': 'Thanh toán khi nhận hàng',
+                'momo_atm': 'Ví MoMo ATM',
+                'momo_qr': 'Ví MoMo QR',
+                'bank_transfer': 'Chuyển khoản ngân hàng'
+            };
+            return methods[method] || method || 'N/A';
+        }
+
+        function formatPaymentStatus(status) {
+            const statuses = {
+                'paid': 'Đã thanh toán',
+                'pending': 'Chờ thanh toán',
+                'failed': 'Thanh toán thất bại'
+            };
+            return statuses[status] || status || 'N/A';
+        }
+
+        function logout() {
+            if (confirm('Bạn chắc chắn muốn thoát?')) {
+                localStorage.removeItem('customer_id');
+                localStorage.removeItem('customer_info');
+                window.location.href = '/';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

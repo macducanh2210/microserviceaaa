@@ -21,12 +21,40 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ]);
 }
 
-function fetchProductDetailByCurl(int $productId): array
+function clearCustomerCart(int $customerId): void
+{
+    $url = "http://api-gateway/api/customers/{$customerId}/cart/clear.php";
+    $internalKey = os_getInternalApiKey();
+    $headers = ['Content-Type: application/json'];
+    if ($internalKey !== '') {
+        $headers[] = 'X-Internal-Key: ' . $internalKey;
+    }
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_TIMEOUT => 8,
+        CURLOPT_HTTPHEADER => $headers,
+        CURLOPT_POSTFIELDS => json_encode([]),
+    ]);
+
+    $response = curl_exec($ch);
+    $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // Log if cart clearing fails, but don't fail the order creation
+    if ($statusCode >= 400) {
+        error_log("Failed to clear cart for customer {$customerId}: HTTP {$statusCode}");
+    }
+}
+
+function fetchProductByIdCurl(int $productId): array
 {
     $urls = [
-        'http://product-service/get-detail.php?id=' . $productId,
-        'http://product-service/api/products/get-detail.php?id=' . $productId,
-        'http://localhost:8080/api/products/get-detail.php?id=' . $productId,
+        'http://api-gateway/api/products/get-detail.php?id=' . $productId,
     ];
 
     $lastError = 'Unknown error';
@@ -76,7 +104,7 @@ function fetchProductDetailByCurl(int $productId): array
 
 function fetchProductByDetailIdCurl(int $detailId): array
 {
-    $url = 'http://product-service/api/products/get-by-detail.php?detail_id=' . $detailId;
+    $url = 'http://api-gateway/api/products/get-by-detail.php?detail_id=' . $detailId;
 
     $ch = curl_init();
     curl_setopt_array($ch, [
@@ -108,8 +136,8 @@ function fetchProductByDetailIdCurl(int $detailId): array
 
 function callProductStockApi(string $action, int $detailId, int $quantity): array
 {
-    $url = 'http://product-service/api/products/' . $action . '.php';
-    $internalKey = trim((string) (getenv('INTERNAL_API_KEY') ?: ''));
+    $url = 'http://api-gateway/api/products/' . $action . '.php';
+    $internalKey = os_getInternalApiKey();
     $headers = ['Content-Type: application/json', 'Accept: application/json'];
     if ($internalKey !== '') {
         $headers[] = 'X-Internal-Key: ' . $internalKey;
@@ -153,19 +181,60 @@ function callProductStockApi(string $action, int $detailId, int $quantity): arra
     return $json;
 }
 
-function ensureIdempotencyTable(PDO $pdo): void
+function fetchCustomerAddress(int $customerId, ?int $addressId = null): ?array
 {
-    $pdo->exec(
-        'CREATE TABLE IF NOT EXISTS order_idempotency (
-            ID BIGINT NOT NULL AUTO_INCREMENT,
-            IDEMPOTENCY_KEY VARCHAR(128) NOT NULL,
-            ORDER_ID INT DEFAULT NULL,
-            STATUS VARCHAR(20) NOT NULL DEFAULT "PENDING",
-            CREATED_AT DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (ID),
-            UNIQUE KEY UK_ORDER_IDEMPOTENCY_KEY (IDEMPOTENCY_KEY)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
-    );
+    $internalKey = os_getInternalApiKey();
+    $headers = $internalKey !== '' ? ['X-Internal-Key: ' . $internalKey] : [];
+
+    $urls = [
+        'http://api-gateway/api/customers/' . $customerId . '/addresses/index.php',
+    ];
+
+    foreach ($urls as $url) {
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 3,
+            CURLOPT_TIMEOUT => 8,
+            CURLOPT_HTTPHEADER => array_merge(['Accept: application/json'], $headers),
+        ]);
+
+        $response = curl_exec($ch);
+        if ($response === false) {
+            curl_close($ch);
+            continue;
+        }
+
+        $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $json = json_decode($response, true);
+        if ($statusCode === 200 && is_array($json) && ($json['success'] ?? false) === true) {
+            $addresses = $json['data'] ?? [];
+            
+            // If specific address requested, find it
+            if ($addressId !== null) {
+                foreach ($addresses as $addr) {
+                    if ((int)$addr['id'] === $addressId) {
+                        return $addr;
+                    }
+                }
+                return null; // Specific address not found
+            }
+            
+            // Otherwise, return default or first address
+            foreach ($addresses as $addr) {
+                if (($addr['is_default'] ?? false) === true) {
+                    return $addr;
+                }
+            }
+            // If no default, return first
+            return $addresses[0] ?? null;
+        }
+    }
+
+    return null;
 }
 
 $input = getJsonInput();
@@ -174,62 +243,46 @@ if (!is_array($input) || count($input) === 0) {
     $input = $_POST;
 }
 
-$userId = isset($input['user_id']) ? (int)$input['user_id'] : (isset($input['userId']) ? (int)$input['userId'] : 0);
+// Hỗ trợ cả customer_id (khách hàng) và user_id (nhân viên)
+$customerId = isset($input['customer_id']) ? (int)$input['customer_id'] : 0;
+$userId     = isset($input['user_id'])     ? (int)$input['user_id']     : (isset($input['userId']) ? (int)$input['userId'] : 0);
+$isCustomerCheckout = $customerId > 0;
+
+// Dùng customer_id làm userId nếu checkout với tư cách khách hàng
+if ($isCustomerCheckout && $userId <= 0) {
+    $userId = $customerId;
+}
+
 $items = $input['items'] ?? ($input['cart'] ?? []);
 $idempotencyKey = trim((string)($_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? ($input['idempotency_key'] ?? '')));
+$paymentMethod = trim((string)($input['payment_method'] ?? 'cod'));
+$selectedAddressId = isset($input['address_id']) ? (int)$input['address_id'] : null;
 
 if ($userId <= 0 || !is_array($items) || count($items) === 0) {
     jsonResponse(400, [
         'success' => false,
-        'message' => 'Payload không hợp lệ. Cần user_id và mảng items.',
+        'message' => 'Payload không hợp lệ. Cần user_id (hoặc customer_id) và mảng items.',
         'data' => null,
     ]);
 }
 
-os_requireRoleByUserId($userId, ['customer', 'staff', 'admin']);
+// Chỉ check role với user-service nếu là nhân viên/admin
+// Khách hàng dùng customer-service DB riêng, không cần verify qua user-service
+if ($isCustomerCheckout) {
+    os_requireInternalKey();
+} else {
+    os_requireRoleByUserId($userId, ['customer', 'staff', 'admin']);
+}
 
 try {
     $pdo = getPDO();
-    ensureIdempotencyTable($pdo);
-
-    if ($idempotencyKey !== '') {
-        try {
-            $insertIdem = $pdo->prepare('INSERT INTO order_idempotency (IDEMPOTENCY_KEY, STATUS) VALUES (:key, "PENDING")');
-            $insertIdem->execute(['key' => $idempotencyKey]);
-        } catch (Throwable $idemInsertError) {
-            $existingStmt = $pdo->prepare('SELECT ORDER_ID, STATUS FROM order_idempotency WHERE IDEMPOTENCY_KEY = :key LIMIT 1');
-            $existingStmt->execute(['key' => $idempotencyKey]);
-            $existing = $existingStmt->fetch();
-
-            if ($existing && (string)$existing['STATUS'] === 'SUCCESS' && (int)$existing['ORDER_ID'] > 0) {
-                jsonResponse(200, [
-                    'success' => true,
-                    'message' => 'Yêu cầu đã được xử lý trước đó (idempotent).',
-                    'data' => [
-                        'order_id' => (int)$existing['ORDER_ID'],
-                        'user_id' => $userId,
-                        'idempotent_reuse' => true,
-                    ],
-                ]);
-            }
-
-            jsonResponse(409, [
-                'success' => false,
-                'message' => 'Yêu cầu đang được xử lý, vui lòng thử lại sau.',
-                'data' => null,
-            ]);
-        }
-    }
-
-    $pdo->beginTransaction();
-
-    $validatedItems = [];
+        $pdo->beginTransaction();
     $totalAmount = 0.0;
     $reservedStocks = [];
 
     foreach ($items as $idx => $item) {
-        $productId = isset($item['product_id']) ? (int)$item['product_id'] : 0;
-        $detailIdInput = isset($item['detail_id']) ? (int)$item['detail_id'] : 0;
+        $productId = isset($item['product_id']) ? (int)$item['product_id'] : (isset($item['productId']) ? (int)$item['productId'] : 0);
+        $detailIdInput = isset($item['detail_id']) ? (int)$item['detail_id'] : (isset($item['detailId']) ? (int)$item['detailId'] : 0);
         $legacyDetailId = isset($item['idchitiet']) ? (int)$item['idchitiet'] : 0;
 
         if ($detailIdInput <= 0 && $legacyDetailId > 0) {
@@ -334,13 +387,26 @@ try {
         'created_at' => date('c'),
         'items' => $validatedItems,
         'total_amount' => $totalAmount,
+        'payment_method' => $paymentMethod,
     ];
 
+    // Fetch customer address if customer checkout
+    if ($isCustomerCheckout) {
+        $address = fetchCustomerAddress($customerId, $selectedAddressId);
+        if ($address) {
+            $orderSnapshot['shipping_address'] = $address;
+        }
+    }
+
+    $paymentStatus = 'paid'; // All payments are considered completed immediately
+
     $orderStmt = $pdo->prepare(
-        'INSERT INTO hoadonthanhtoan (IDKHACHHANG, IDNHANVIEN, DIEMDADOI, GHICHU, TREMOVE) VALUES (:user_id, NULL, 0, :note, 1)'
+        'INSERT INTO hoadonthanhtoan (IDKHACHHANG, IDNHANVIEN, DIEMDADOI, PAYMENT_METHOD, PAYMENT_STATUS, GHICHU, TREMOVE) VALUES (:user_id, NULL, 0, :payment_method, :payment_status, :note, 1)'
     );
     $orderStmt->execute([
         'user_id' => $userId,
+        'payment_method' => $paymentMethod,
+        'payment_status' => $paymentStatus,
         'note' => json_encode($orderSnapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ]);
 
@@ -368,6 +434,11 @@ try {
         ]);
     }
 
+    // Clear customer cart after successful order creation
+    if ($isCustomerCheckout) {
+        clearCustomerCart($customerId);
+    }
+
     jsonResponse(201, [
         'success' => true,
         'message' => 'Tạo đơn hàng thành công.',
@@ -379,16 +450,7 @@ try {
         ],
     ]);
 } catch (Throwable $e) {
-        if (isset($pdo) && $pdo instanceof PDO && $idempotencyKey !== '') {
-            try {
-                $failStmt = $pdo->prepare('UPDATE order_idempotency SET STATUS = "FAILED" WHERE IDEMPOTENCY_KEY = :key');
-                $failStmt->execute(['key' => $idempotencyKey]);
-            } catch (Throwable $ignore) {
-                // no-op
-            }
-        }
-
-    if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
+if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
 

@@ -68,6 +68,8 @@ CREATE TABLE `hoadonthanhtoan` (
   `IDNHANVIEN` int(11) DEFAULT NULL,
   `DIEMDADOI` int(11) DEFAULT 0,
   `NGAYTHANHTOAN` datetime DEFAULT current_timestamp(),
+  `PAYMENT_METHOD` varchar(20) DEFAULT NULL,
+  `PAYMENT_STATUS` varchar(20) DEFAULT 'pending',
   `GHICHU` text DEFAULT NULL,
   `TREMOVE` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

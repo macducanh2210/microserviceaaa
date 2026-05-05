@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTTMart - Thanh Toán</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; }
+        .payment-card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 20px; }
+        .payment-option { border: 2px solid #e9ecef; border-radius: 10px; padding: 20px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
+        .payment-option:hover { border-color: #ff3300; }
+        .payment-option.selected { border-color: #ff3300; background-color: #fff5f5; }
+        .address-option { border: 2px solid #e9ecef; border-radius: 10px; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.3s; }
+        .address-option:hover { border-color: #007bff; }
+        .address-option.selected { border-color: #007bff; background-color: #f8f9ff; }
+        .btn-payment { background: #ff3300; color: white; border: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; }
+        .btn-payment:hover { background: #e02900; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="text-center mb-4 fw-bold">Chọn Phương Thức Thanh Toán</h2>
+
+                <div class="payment-card">
+                    <h4 class="mb-3">Thông Tin Đơn Hàng</h4>
+                    <div id="orderSummary">
+                        <!-- Order summary will be populated by JS -->
+                    </div>
+                    <hr>
+                    <h4 class="mb-3">Địa Chỉ Giao Hàng</h4>
+                    <div id="shippingAddress">
+                        <!-- Address will be populated by JS -->
+                    </div>
+                </div>
+
+                <div class="payment-card">
+                    <h4 class="mb-3">Chọn Phương Thức Thanh Toán</h4>
+
+                    <div class="payment-option" data-method="cod">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-truck fa-2x me-3 text-primary"></i>
+                            <div>
+                                <h5 class="mb-1">Thanh Toán Khi Nhận Hàng (COD)</h5>
+                                <p class="mb-0 text-muted">Thanh toán bằng tiền mặt khi nhận hàng tại nhà.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-option" data-method="momo_atm">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-credit-card fa-2x me-3 text-danger"></i>
+                            <div>
+                                <h5 class="mb-1">Thanh Toán Qua MoMo ATM</h5>
+                                <p class="mb-0 text-muted">Thanh toán bằng thẻ ATM qua ứng dụng MoMo.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-option" data-method="momo_qr">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-qrcode fa-2x me-3 text-success"></i>
+                            <div>
+                                <h5 class="mb-1">Thanh Toán Qua MoMo QR</h5>
+                                <p class="mb-0 text-muted">Quét mã QR để thanh toán qua MoMo.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-payment w-100 mt-4" id="payButton" disabled>Thanh Toán</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedMethod = null;
+        let orderData = {};
+        let selectedAddressId = null;
+        let customerAddresses = [];
+
+        // Get order data from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const cartData = urlParams.get('cart');
+        if (cartData) {
+            try {
+                orderData = JSON.parse(decodeURIComponent(cartData));
+            } catch (e) {
+                try {
+                    orderData = JSON.parse(decodeURIComponent(decodeURIComponent(cartData)));
+                } catch (e2) {
+                    console.error('Invalid cart data', e2);
+                }
+            }
+        }
+
+        if (Array.isArray(orderData.items) && !orderData.total) {
+            orderData.total = orderData.items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0);
+        }
+
+        // Fallback to localStorage cart if URL data is not present or invalid
+        if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
+            try {
+                const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+                if (Array.isArray(localCart) && localCart.length > 0) {
+                    orderData.items = localCart;
+                    orderData.total = localCart.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.quantity || 0)), 0);
+                }
+            } catch (e) {
+                console.error('Invalid local cart data', e);
+            }
+        }
+
+        // Populate order summary
+        function populateOrderSummary() {
+            const summaryEl = document.getElementById('orderSummary');
+            if (!orderData.items || orderData.items.length === 0) {
+                summaryEl.innerHTML = '<p class="text-muted">Không có sản phẩm nào trong đơn hàng.</p>';
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Giá</th><th>Tổng</th></tr></thead><tbody>';
+            let total = 0;
+
+            orderData.items.forEach(item => {
+                const subtotal = item.quantity * item.price;
+                total += subtotal;
+                html += `<tr>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>${formatCurrency(item.price)}</td>
+                    <td>${formatCurrency(subtotal)}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table><h5 class="text-end">Tổng cộng: <span class="text-danger">${formatCurrency(total)}</span></h5></div>`;
+            summaryEl.innerHTML = html;
+        }
+
+        // Populate shipping address
+        async function populateShippingAddress() {
+            const addressEl = document.getElementById('shippingAddress');
+            const customerId = Number(localStorage.getItem('customer_id') || 0);
+            
+            if (customerId <= 0) {
+                addressEl.innerHTML = '<p class="text-muted">Vui lòng đăng nhập để chọn địa chỉ giao hàng.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/customers/${customerId}/addresses`);
+                const result = await response.json();
+                
+                if (!result.success) {
+                    addressEl.innerHTML = '<p class="text-danger">Không thể tải danh sách địa chỉ.</p>';
+                    return;
+                }
+                
+                customerAddresses = result.data || [];
+                
+                if (customerAddresses.length === 0) {
+                    addressEl.innerHTML = '<p class="text-muted">Bạn chưa có địa chỉ nào. <a href="customer-profile.html">Thêm địa chỉ</a></p>';
+                    return;
+                }
+                
+                let html = '<h5>Chọn địa chỉ giao hàng:</h5>';
+                customerAddresses.forEach(addr => {
+                    const isSelected = addr.is_default || (!selectedAddressId && addr.is_default);
+                    if (isSelected && !selectedAddressId) {
+                        selectedAddressId = addr.id;
+                    }
+                    
+                    html += `
+                        <div class="address-option ${isSelected ? 'selected' : ''}" data-address-id="${addr.id}">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="shipping_address" 
+                                       value="${addr.id}" ${isSelected ? 'checked' : ''}>
+                                <label class="form-check-label">
+                                    <strong>${addr.name || 'Địa chỉ'}</strong><br>
+                                    ${addr.address_detail}, ${addr.ward}, ${addr.district}, ${addr.city}<br>
+                                    <small class="text-muted">SĐT: ${addr.phone}</small>
+                                    ${addr.is_default ? '<span class="badge bg-primary">Mặc định</span>' : ''}
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                addressEl.innerHTML = html;
+                
+                // Add event listeners for address selection
+                document.querySelectorAll('.address-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        document.querySelectorAll('.address-option').forEach(opt => opt.classList.remove('selected'));
+                        document.querySelectorAll('input[name="shipping_address"]').forEach(radio => radio.checked = false);
+                        
+                        this.classList.add('selected');
+                        const radio = this.querySelector('input[type="radio"]');
+                        radio.checked = true;
+                        selectedAddressId = parseInt(radio.value);
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error loading addresses:', error);
+                addressEl.innerHTML = '<p class="text-danger">Lỗi khi tải địa chỉ giao hàng.</p>';
+            }
+        }
+
+        // Format currency
+        function formatCurrency(value) {
+            return Number(value || 0).toLocaleString('vi-VN') + ' ₫';
+        }
+
+        // Handle payment method selection
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedMethod = this.dataset.method;
+                document.getElementById('payButton').disabled = false;
+            });
+        });
+
+        // Handle payment
+        document.getElementById('payButton').addEventListener('click', async function() {
+            if (!selectedMethod) return;
+
+            await createOrder(selectedMethod);
+        });
+
+        // Create order function
+        async function createOrder(paymentMethod) {
+            try {
+                const items = Array.isArray(orderData?.items) ? orderData.items : [];
+                if (items.length === 0) {
+                    alert('Không có sản phẩm trong đơn hàng để thanh toán.');
+                    return;
+                }
+
+                const customerId = Number(localStorage.getItem('customer_id') || 0);
+                if (customerId <= 0) {
+                    alert('Vui lòng đăng nhập để thanh toán.');
+                    return;
+                }
+
+                const endpoint = `/api/customers/${customerId}/orders`;
+                const requestData = {
+                    items: items.map(item => ({
+                        product_id: item.product_id ?? item.productId ?? 0,
+                        detail_id: item.detail_id ?? item.detailId ?? 0,
+                        quantity: item.quantity
+                    })),
+                    payment_method: paymentMethod
+                };
+                
+                // Add selected address if available
+                if (selectedAddressId) {
+                    requestData.address_id = selectedAddressId;
+                }
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const responseText = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('Order creation returned non-JSON response', responseText);
+                    alert('Có lỗi khi tạo đơn hàng: server trả về dữ liệu không hợp lệ.');
+                    return;
+                }
+
+                if (!result.success) {
+                    alert('Lỗi: ' + result.message);
+                    return;
+                }
+
+                // Clear cart after successful order creation
+                if (typeof window.clearCart === 'function') {
+                    window.clearCart();
+                }
+
+                alert('Đơn hàng đã được tạo thành công!');
+
+                if (paymentMethod === 'cod') {
+                    window.location.href = 'customer-orders.html';
+                    return;
+                }
+
+                const paymentEndpoint = paymentMethod === 'momo_atm'
+                    ? '/api/payments/momo_atm.php'
+                    : '/api/payments/momo_qr.php';
+
+                const payResponse = await fetch(paymentEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        amount: orderData.total,
+                        order_id: result.data.order_id,
+                    }),
+                });
+
+                const payResult = await payResponse.json();
+                if (payResponse.ok && payResult.success && payResult.payUrl) {
+                    window.location.href = payResult.payUrl;
+                    return;
+                }
+
+                alert('Không thể chuyển tới cổng MoMo. ' + (payResult.message || ''));
+            } catch (error) {
+                console.error('Error creating order:', error);
+                alert('Có lỗi xảy ra khi tạo đơn hàng.');
+            }
+        }
+
+        // Initialize
+        populateOrderSummary();
+        populateShippingAddress();
+
+        if (!Array.isArray(orderData?.items) || orderData.items.length === 0) {
+            document.getElementById('payButton').disabled = true;
+        }
+    </script>
+    <script src="main.js"></script>
+</body>
+</html>

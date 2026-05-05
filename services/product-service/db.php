@@ -140,7 +140,11 @@ function ps_resolveUserRole(int $userId): string
 
 function ensureProductStockWriteAuthorized(array $input): void
 {
-    $configuredInternalKey = trim((string) (getenv('INTERNAL_API_KEY') ?: ''));
+    $configuredInternalKey = (string)getenv('INTERNAL_API_KEY');
+    if ($configuredInternalKey === '') $configuredInternalKey = (string)($_ENV['INTERNAL_API_KEY'] ?? '');
+    if ($configuredInternalKey === '') $configuredInternalKey = (string)($_SERVER['INTERNAL_API_KEY'] ?? '');
+    $configuredInternalKey = trim($configuredInternalKey);
+
     $requestInternalKey = getRequestHeaderValue('X-Internal-Key');
 
     if ($configuredInternalKey !== '' && hash_equals($configuredInternalKey, $requestInternalKey)) {
@@ -182,7 +186,11 @@ function ensureProductStockWriteAuthorized(array $input): void
 
 function ensureProductCrudWriteAuthorized(array $input): int
 {
-    $configuredInternalKey = trim((string) (getenv('INTERNAL_API_KEY') ?: ''));
+    $configuredInternalKey = (string)getenv('INTERNAL_API_KEY');
+    if ($configuredInternalKey === '') $configuredInternalKey = (string)($_ENV['INTERNAL_API_KEY'] ?? '');
+    if ($configuredInternalKey === '') $configuredInternalKey = (string)($_SERVER['INTERNAL_API_KEY'] ?? '');
+    $configuredInternalKey = trim($configuredInternalKey);
+
     $requestInternalKey = getRequestHeaderValue('X-Internal-Key');
 
     if ($configuredInternalKey !== '' && hash_equals($configuredInternalKey, $requestInternalKey)) {

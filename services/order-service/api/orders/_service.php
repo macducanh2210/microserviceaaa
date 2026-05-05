@@ -97,7 +97,7 @@ function os_callStockApi(string $action, int $detailId, int $quantity): void
     ];
 
     $lastError = 'Unknown stock API error';
-    $internalKey = trim((string) (getenv('INTERNAL_API_KEY') ?: ''));
+    $internalKey = os_getInternalApiKey();
     $headers = $internalKey !== '' ? ['X-Internal-Key: ' . $internalKey] : [];
 
     foreach ($urls as $url) {
@@ -255,4 +255,40 @@ function os_requireRoleByUserId(int $userId, array $allowedRoles): array
     }
 
     return $user;
+}
+
+function os_getInternalApiKey(): string
+{
+    $key = (string)getenv('INTERNAL_API_KEY');
+    if ($key === '') {
+        $key = (string)($_ENV['INTERNAL_API_KEY'] ?? '');
+    }
+    if ($key === '') {
+        $key = (string)($_SERVER['INTERNAL_API_KEY'] ?? '');
+    }
+    return trim($key);
+}
+
+function os_requireInternalKey(): void
+{
+    $internalKey = os_getInternalApiKey();
+    if ($internalKey !== '') {
+        // Check standard HTTP header (normalized by PHP/Apache)
+        $providedKey = $_SERVER['HTTP_X_INTERNAL_KEY'] ?? '';
+        
+        // Fallback to searching all headers (some configurations might not prefix with HTTP_)
+        if ($providedKey === '' && function_exists('getallheaders')) {
+            $headers = getallheaders();
+            foreach ($headers as $name => $value) {
+                if (strcasecmp($name, 'X-Internal-Key') === 0) {
+                    $providedKey = $value;
+                    break;
+                }
+            }
+        }
+
+        if (trim($providedKey) !== $internalKey) {
+            jsonResponse(403, ['success' => false, 'message' => 'Truy cập bị từ chối. Vui lòng gọi qua customer-service.', 'data' => null]);
+        }
+    }
 }

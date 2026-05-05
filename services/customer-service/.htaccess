@@ -1,0 +1,35 @@
+Options -Indexes
+RewriteEngine On
+
+# Health check
+RewriteRule ^api/customers/health\.php$ api/health.php [QSA,L]
+
+# /api/customers/{id}/cart/add.php  → /api/customers/cart/add.php
+RewriteRule ^api/customers/(\d+)/cart/add\.php$       api/customers/cart/add.php       [QSA,L]
+RewriteRule ^api/customers/(\d+)/cart/remove\.php$    api/customers/cart/remove.php    [QSA,L]
+RewriteRule ^api/customers/(\d+)/cart/update\.php$    api/customers/cart/update-qty.php [QSA,L]
+RewriteRule ^api/customers/(\d+)/cart/update-qty\.php$ api/customers/cart/update-qty.php [QSA,L]
+RewriteRule ^api/customers/(\d+)/cart/clear\.php$     api/customers/cart/clear.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/cart/?$              api/customers/cart/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/cart/index\.php$     api/customers/cart/index.php     [QSA,L]
+
+# Profile
+RewriteRule ^api/customers/(\d+)/profile/?$              api/customers/profile/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/profile/index\.php$     api/customers/profile/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/profile/password\.php$  api/customers/profile/password.php  [QSA,L]
+
+# Addresses
+RewriteRule ^api/customers/(\d+)/addresses/?$              api/customers/addresses/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/addresses/index\.php$     api/customers/addresses/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/addresses/(\d+)$          api/customers/addresses/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/addresses/(\d+)/set-default\.php$ api/customers/addresses/set-default.php [QSA,L]
+
+# Wishlist
+RewriteRule ^api/customers/(\d+)/wishlist/?$              api/customers/wishlist/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/wishlist/index\.php$     api/customers/wishlist/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/wishlist/remove\.php$    api/customers/wishlist/remove.php    [QSA,L]
+
+# Orders
+RewriteRule ^api/customers/(\d+)/orders/?$              api/customers/orders/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/orders/index\.php$     api/customers/orders/index.php     [QSA,L]
+RewriteRule ^api/customers/(\d+)/orders/(\d+)$          api/customers/orders/index.php     [QSA,L]

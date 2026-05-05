@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Sách Yêu Thích - UTTMart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fcfcfc; }
+        .navbar { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .product-card { border: none; transition: 0.3s; margin-bottom: 20px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .product-img { width: 100%; height: 280px; object-fit: cover; }
+        .heart-btn { position: absolute; top: 10px; right: 10px; background: white; border: none; font-size: 1.5rem; cursor: pointer; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        .heart-btn.active { color: #ff3300; }
+        .btn-black { background: #1a1a1a; color: white; border-radius: 0; }
+        .btn-black:hover { background: #ff3300; color: white; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="/">UTT<span style="color:#ff3300">MART</span></a>
+            <div class="d-flex align-items-center gap-3">
+                <span id="userGreeting" class="text-muted"></span>
+                <a href="/customer-profile.html" class="btn btn-outline-dark btn-sm">Hồ Sơ</a>
+                <button onclick="logout()" class="btn btn-outline-danger btn-sm">Thoát</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h2 class="fw-bold mb-4">Danh Sách Yêu Thích</h2>
+        
+        <div class="row" id="wishlistGrid"></div>
+    </div>
+
+    <script>
+        const CUSTOMER_API_BASE = '/api/customers';
+        const PRODUCT_API_BASE = '/api/products';
+        let customerId = null;
+        let wishlistItems = [];
+
+        function init() {
+            customerId = localStorage.getItem('customer_id');
+            if (!customerId) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const customerInfo = JSON.parse(localStorage.getItem('customer_info') || '{}');
+            document.getElementById('userGreeting').textContent = `Chào, ${customerInfo.full_name || ''}`;
+
+            loadWishlist();
+        }
+
+        async function loadWishlist() {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/wishlist/index.php`);
+                const data = await res.json();
+                
+                if (data.success && data.data.length > 0) {
+                    wishlistItems = data.data;
+                    await loadProductDetails();
+                } else {
+                    document.getElementById('wishlistGrid').innerHTML = '<div class="alert alert-info col-12">Danh sách yêu thích của bạn trống</div>';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadProductDetails() {
+            try {
+                const res = await fetch(`${PRODUCT_API_BASE}/get-all.php`);
+                const products = await res.json();
+                
+                let html = '';
+                for (const wishItem of wishlistItems) {
+                    const product = products.find(p => p.IDCHITIETSANPHAM == wishItem.product_detail_id);
+                    if (product) {
+                        html += `
+                            <div class="col-6 col-md-3">
+                                <div class="product-card position-relative">
+                                    <img src="${product.ANHDAIDIEN || '/images/placeholder.jpg'}" class="product-img" alt="${product.TENSANPHAM}">
+                                    <button class="heart-btn active" onclick="removeFromWishlist(${product.IDCHITIETSANPHAM})">
+                                        <i class="fa-solid fa-heart"></i>
+                                    </button>
+                                    <div class="p-3 text-center">
+                                        <h6 class="text-truncate" title="${product.TENSANPHAM}">${product.TENSANPHAM}</h6>
+                                        <p class="text-danger fw-bold mb-3">${formatPrice(product.GIA)}</p>
+                                        <button class="btn btn-black btn-sm w-100" onclick="addToCart(${product.IDCHITIETSANPHAM}, '${product.TENSANPHAM}', ${product.GIA})">
+                                            <i class="fa-solid fa-cart-plus me-1"></i> Mua
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                document.getElementById('wishlistGrid').innerHTML = html || '<div class="alert alert-info col-12">Không tìm thấy sản phẩm</div>';
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function removeFromWishlist(productDetailId) {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/wishlist/remove.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_detail_id: productDetailId })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    loadWishlist();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function addToCart(productId, productName, price) {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/cart/add.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        detail_id: productId,
+                        name: productName,
+                        price: price,
+                        quantity: 1
+                    })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    alert('Thêm vào giỏ hàng thành công!');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(price);
+        }
+
+        function logout() {
+            if (confirm('Bạn chắc chắn muốn thoát?')) {
+                localStorage.removeItem('customer_id');
+                localStorage.removeItem('customer_info');
+                window.location.href = '/';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

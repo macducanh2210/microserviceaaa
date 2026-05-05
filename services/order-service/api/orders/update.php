@@ -8,24 +8,37 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'PUT
     jsonResponse(405, ['success' => false, 'message' => 'Method not allowed. Use POST/PUT/PATCH.', 'data' => null]);
 }
 
-$input = getJsonInput();
-$userId = isset($input['user_id']) ? (int) $input['user_id'] : 0;
-$orderId = isset($input['order_id']) ? (int) $input['order_id'] : 0;
-$items = $input['items'] ?? [];
+/**
+ * Phân biệt 2 flow:
+ *  - customer_id có  → Customer flow: chỉ cập nhật đơn của mình
+ *  - user_id có      → Staff/Admin flow: verify role, admin cập nhật được bất kỳ đơn nào
+ */
+$input      = getJsonInput();
+$customerId = isset($input['customer_id']) ? (int) $input['customer_id'] : 0;
+$userId     = isset($input['user_id'])     ? (int) $input['user_id']     : 0;
+$orderId    = isset($input['order_id'])    ? (int) $input['order_id']    : 0;
+$items      = $input['items'] ?? [];
 
-if ($userId <= 0 || $orderId <= 0 || !is_array($items) || count($items) === 0) {
-    jsonResponse(400, ['success' => false, 'message' => 'Thiếu hoặc sai dữ liệu: user_id, order_id, items.', 'data' => null]);
+if (($customerId <= 0 && $userId <= 0) || $orderId <= 0 || !is_array($items) || count($items) === 0) {
+    jsonResponse(400, ['success' => false, 'message' => 'Thiếu hoặc sai dữ liệu: customer_id/user_id, order_id, items.', 'data' => null]);
 }
 
-$requester = os_requireRoleByUserId($userId, ['customer', 'admin']);
-$requesterRole = (string) ($requester['role'] ?? 'customer');
+if ($customerId > 0) {
+    // ── CUSTOMER FLOW ──────────────────────────────────────────────────────────
+    os_requireInternalKey();
+    $requesterRole = 'customer';
+} else {
+    // ── STAFF / ADMIN FLOW ─────────────────────────────────────────────────────
+    $requester     = os_requireRoleByUserId($userId, ['staff', 'admin']);
+    $requesterRole = (string) ($requester['role'] ?? 'staff');
+}
 
 $reservedNew = [];
 
 try {
-    $pdo = getPDO();
+    $pdo   = getPDO();
     $order = $requesterRole === 'customer'
-        ? os_getOrderOwnedByUser($pdo, $orderId, $userId)
+        ? os_getOrderOwnedByUser($pdo, $orderId, $customerId)
         : os_getOrderById($pdo, $orderId);
 
     if (!$order) {
@@ -36,16 +49,16 @@ try {
         jsonResponse(409, ['success' => false, 'message' => 'Đơn hàng đã hủy, không thể cập nhật.', 'data' => null]);
     }
 
-    $oldRows = os_getOrderDetailRows($pdo, $orderId);
+    $oldRows  = os_getOrderDetailRows($pdo, $orderId);
     $resolved = os_resolveItems($items);
     $newItems = $resolved['items'];
 
-    // Reserve stock for new items first. If any fail, rollback reservation immediately.
+    // Reserve stock for new items first.
     foreach ($newItems as $line) {
         os_callStockApi('decrease-stock', (int) $line['detail_id'], (int) $line['quantity']);
         $reservedNew[] = [
             'detail_id' => (int) $line['detail_id'],
-            'quantity' => (int) $line['quantity'],
+            'quantity'  => (int) $line['quantity'],
         ];
     }
 
@@ -58,21 +71,20 @@ try {
     foreach ($newItems as $line) {
         $ins->execute([
             'detail_id' => (int) $line['detail_id'],
-            'order_id' => $orderId,
-            'qty' => (int) $line['quantity'],
+            'order_id'  => $orderId,
+            'qty'       => (int) $line['quantity'],
         ]);
     }
 
     $snapshot = [
-        'user_id' => $userId,
-        'updated_at' => date('Y-m-d H:i:s'),
-        'items' => $newItems,
+        'updated_at'   => date('Y-m-d H:i:s'),
+        'items'        => $newItems,
         'total_amount' => $resolved['total_amount'],
     ];
 
     $upd = $pdo->prepare('UPDATE hoadonthanhtoan SET GHICHU = :note WHERE ID = :order_id');
     $upd->execute([
-        'note' => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        'note'     => json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         'order_id' => $orderId,
     ]);
 
@@ -86,12 +98,11 @@ try {
     jsonResponse(200, [
         'success' => true,
         'message' => 'Cập nhật đơn hàng thành công.',
-        'data' => [
-            'order_id' => $orderId,
-            'user_id' => (int) ($order['IDKHACHHANG'] ?? $userId),
-            'updated_by' => $userId,
+        'data'    => [
+            'order_id'     => $orderId,
+            'customer_id'  => (int) ($order['IDKHACHHANG'] ?? 0),
             'total_amount' => $resolved['total_amount'],
-            'items' => $newItems,
+            'items'        => $newItems,
         ],
     ]);
 } catch (Throwable $e) {

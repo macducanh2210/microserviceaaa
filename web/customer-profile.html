@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ - UTTMart</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fcfcfc; }
+        .navbar { background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+        /* ── Layout: sidebar + content nằm ngang nhau ── */
+        .profile-layout {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+            margin: 40px auto;
+            max-width: 1200px;
+            padding: 0 16px;
+        }
+        .profile-sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: sticky;
+            top: 80px;
+        }
+        .profile-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar-item { padding: 12px 15px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; transition: 0.3s; display: block; }
+        .sidebar-item:hover { background: #f8f9fa; color: #ff3300; }
+        .sidebar-item.active { background: #ff3300; color: white; }
+        .content-card { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { font-weight: 600; margin-bottom: 8px; display: block; }
+        .btn-primary { background: #1a1a1a; border: none; }
+        .btn-primary:hover { background: #ff3300; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .info-row:last-child { border-bottom: none; }
+        .error-message { color: #dc3545; font-size: 0.875rem; margin-top: 0.25rem; }
+        .success-message { color: #28a745; font-size: 0.875rem; margin-top: 0.25rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="/">UTT<span style="color:#ff3300">MART</span></a>
+            <div class="d-flex align-items-center gap-3">
+                <span id="userGreeting" class="text-muted"></span>
+                <a href="/customer-orders.html" class="btn btn-outline-dark btn-sm">Đơn Hàng</a>
+                <button onclick="logout()" class="btn btn-outline-danger btn-sm">Thoát</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── Layout: sidebar + content nằm ngang nhau bằng Bootstrap Grid ── -->
+    <div class="container my-5">
+        <div class="row">
+            <!-- SIDEBAR -->
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="profile-sidebar">
+                    <div class="sidebar-item active" onclick="switchSection('profile')">
+                        <i class="fa-solid fa-user me-2"></i> Hồ Sơ
+                    </div>
+                    <div class="sidebar-item" onclick="switchSection('password')">
+                        <i class="fa-solid fa-lock me-2"></i> Đổi Mật Khẩu
+                    </div>
+                    <div class="sidebar-item" onclick="switchSection('addresses')">
+                        <i class="fa-solid fa-map-location-dot me-2"></i> Địa Chỉ
+                    </div>
+                    <div class="sidebar-item" onclick="switchSection('wishlist')">
+                        <i class="fa-solid fa-heart me-2"></i> Danh Sách Yêu Thích
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENT -->
+            <div class="col-md-9">
+                <div class="profile-content">
+                    <!-- PROFILE SECTION -->
+                    <div id="profile" class="section active">
+                <div class="content-card">
+                    <h4 class="fw-bold mb-4">Thông Tin Cá Nhân</h4>
+
+                    <div class="form-group">
+                        <label>Tên đầy đủ</label>
+                        <input type="text" id="profileFullName" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="profileEmail" class="form-control" disabled>
+                        <small class="text-muted">Email không thể thay đổi</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="profilePhone" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Địa chỉ</label>
+                        <input type="text" id="profileAddress" class="form-control">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Ngày sinh</label>
+                                <input type="date" id="profileDOB" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Giới tính</label>
+                                <select id="profileGender" class="form-control">
+                                    <option value="0">Nam</option>
+                                    <option value="1">Nữ</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="profileMessage"></div>
+                    <button onclick="updateProfile()" class="btn btn-primary w-100 py-2 mt-3">Cập Nhật Thông Tin</button>
+                </div>
+            </div>
+
+            <!-- PASSWORD SECTION -->
+            <div id="password" class="section">
+                <div class="content-card">
+                    <h4 class="fw-bold mb-4">Đổi Mật Khẩu</h4>
+
+                    <div class="form-group">
+                        <label>Mật khẩu hiện tại</label>
+                        <input type="password" id="currentPassword" class="form-control" placeholder="Nhập mật khẩu hiện tại">
+                        <div id="currentPasswordError" class="error-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mật khẩu mới</label>
+                        <input type="password" id="newPassword" class="form-control" placeholder="Nhập mật khẩu mới (ít nhất 6 ký tự)">
+                        <div id="newPasswordError" class="error-message"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Xác nhận mật khẩu mới</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Nhập lại mật khẩu mới">
+                        <div id="confirmPasswordError" class="error-message"></div>
+                    </div>
+
+                    <div id="passwordMessage"></div>
+                    <button onclick="changePassword()" class="btn btn-primary w-100 py-2 mt-3">Đổi Mật Khẩu</button>
+                </div>
+            </div>
+
+            <!-- ADDRESSES SECTION -->
+            <div id="addresses" class="section">
+                <div class="content-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold mb-0">Địa Chỉ Của Tôi</h4>
+                        <button onclick="openAddressModal()" class="btn btn-primary btn-sm">+ Thêm Địa Chỉ</button>
+                    </div>
+                    <div id="addressList"></div>
+                </div>
+            </div>
+
+            <!-- WISHLIST SECTION -->
+            <div id="wishlist" class="section">
+                <div class="content-card">
+                    <h4 class="fw-bold mb-4">Danh Sách Yêu Thích</h4>
+                    <div id="wishlistItems" class="row"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADDRESS MODAL -->
+    <div class="modal fade" id="addressModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addressModalTitle">Thêm Địa Chỉ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Tên địa chỉ</label>
+                        <input type="text" id="addrName" class="form-control" placeholder="Nhà riêng, Công ty...">
+                    </div>
+                    <div class="form-group">
+                        <label>Thành phố</label>
+                        <input type="text" id="addrCity" class="form-control" placeholder="Hà Nội">
+                    </div>
+                    <div class="form-group">
+                        <label>Quận/Huyện</label>
+                        <input type="text" id="addrDistrict" class="form-control" placeholder="Hoàn Kiếm">
+                    </div>
+                    <div class="form-group">
+                        <label>Phường/Xã</label>
+                        <input type="text" id="addrWard" class="form-control" placeholder="Tràng Tiền">
+                    </div>
+                    <div class="form-group">
+                        <label>Địa chỉ chi tiết</label>
+                        <input type="text" id="addrDetail" class="form-control" placeholder="123 Đường ABC">
+                    </div>
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input type="tel" id="addrPhone" class="form-control" placeholder="0123456789">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAddress()">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const CUSTOMER_API_BASE = '/api/customers';
+        let customerId = null;
+        let editingAddressId = null;
+        let customerAddresses = [];
+
+        // Initialize
+        function init() {
+            customerId = localStorage.getItem('customer_id');
+            if (!customerId) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const customerInfo = JSON.parse(localStorage.getItem('customer_info') || '{}');
+            document.getElementById('userGreeting').textContent = `Chào, ${customerInfo.full_name || ''}`;
+
+            loadProfile();
+            loadAddresses();
+            loadWishlist();
+        }
+
+        async function loadProfile() {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/profile/index.php`);
+                const data = await res.json();
+                if (data.success) {
+                    const profile = data.data;
+                    document.getElementById('profileFullName').value = profile.full_name || '';
+                    document.getElementById('profileEmail').value = profile.email || '';
+                    document.getElementById('profilePhone').value = profile.phone || '';
+                    document.getElementById('profileAddress').value = profile.address || '';
+                    document.getElementById('profileDOB').value = profile.dob || '';
+                    document.getElementById('profileGender').value = profile.gender || '0';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function updateProfile() {
+            const data = {
+                full_name: document.getElementById('profileFullName').value,
+                phone: document.getElementById('profilePhone').value,
+                address: document.getElementById('profileAddress').value,
+                dob: document.getElementById('profileDOB').value,
+                gender: parseInt(document.getElementById('profileGender').value)
+            };
+
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/profile/index.php`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    document.getElementById('profileMessage').innerHTML = '<div class="alert alert-success">Cập nhật thành công!</div>';
+                    setTimeout(() => {
+                        document.getElementById('profileMessage').innerHTML = '';
+                    }, 3000);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Cập nhật thất bại');
+            }
+        }
+
+        async function changePassword() {
+            const oldPwd = document.getElementById('currentPassword').value;
+            const newPwd = document.getElementById('newPassword').value;
+            const confirmPwd = document.getElementById('confirmPassword').value;
+
+            document.getElementById('currentPasswordError').textContent = '';
+            document.getElementById('newPasswordError').textContent = '';
+            document.getElementById('confirmPasswordError').textContent = '';
+
+            if (!oldPwd || !newPwd || !confirmPwd) {
+                if (!oldPwd) document.getElementById('currentPasswordError').textContent = 'Bắt buộc';
+                if (!newPwd) document.getElementById('newPasswordError').textContent = 'Bắt buộc';
+                if (!confirmPwd) document.getElementById('confirmPasswordError').textContent = 'Bắt buộc';
+                return;
+            }
+
+            if (newPwd.length < 6) {
+                document.getElementById('newPasswordError').textContent = 'Mật khẩu phải có ít nhất 6 ký tự';
+                return;
+            }
+
+            if (newPwd !== confirmPwd) {
+                document.getElementById('confirmPasswordError').textContent = 'Mật khẩu không khớp';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/profile/password.php`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ old_password: oldPwd, new_password: newPwd })
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    document.getElementById('passwordMessage').innerHTML = '<div class="alert alert-success">Đổi mật khẩu thành công!</div>';
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    setTimeout(() => {
+                        document.getElementById('passwordMessage').innerHTML = '';
+                    }, 3000);
+                } else {
+                    document.getElementById('currentPasswordError').textContent = result.message;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Đổi mật khẩu thất bại');
+            }
+        }
+
+        async function loadAddresses() {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/addresses/index.php`);
+                const data = await res.json();
+                if (data.success) {
+                    customerAddresses = data.data;
+                    const addressList = document.getElementById('addressList');
+                    if (data.data.length === 0) {
+                        addressList.innerHTML = '<p class="text-muted">Chưa có địa chỉ nào</p>';
+                        return;
+                    }
+
+                    addressList.innerHTML = data.data.map(addr => `
+                        <div class="border rounded p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-1">${addr.name}</h6>
+                                    <p class="mb-1">${addr.address_detail}, ${addr.ward}, ${addr.district}, ${addr.city}</p>
+                                    <p class="mb-0 text-muted">SĐT: ${addr.phone || 'N/A'}</p>
+                                </div>
+                                <span class="badge ${addr.is_default ? 'bg-success' : 'bg-light text-dark'}">
+                                    ${addr.is_default ? 'Mặc định' : ''}
+                                </span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-dark" onclick="editAddress(${addr.id})">Sửa</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAddress(${addr.id})">Xóa</button>
+                                ${!addr.is_default ? `<button class="btn btn-sm btn-outline-success" onclick="setDefaultAddress(${addr.id})">Đặt mặc định</button>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadWishlist() {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/wishlist/index.php`);
+                const data = await res.json();
+                if (data.success && data.data.length > 0) {
+                    const items = document.getElementById('wishlistItems');
+                    items.innerHTML = data.data.map(item => `
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h6>Product ID: ${item.product_detail_id}</h6>
+                                    <button class="btn btn-sm btn-danger" onclick="removeFromWishlist(${item.product_detail_id})">Xóa khỏi yêu thích</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('wishlistItems').innerHTML = '<p class="text-muted col-12">Danh sách yêu thích rỗng</p>';
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function openAddressModal() {
+            editingAddressId = null;
+            document.getElementById('addressModalTitle').textContent = 'Thêm Địa Chỉ';
+            document.getElementById('addrName').value = '';
+            document.getElementById('addrCity').value = '';
+            document.getElementById('addrDistrict').value = '';
+            document.getElementById('addrWard').value = '';
+            document.getElementById('addrDetail').value = '';
+            document.getElementById('addrPhone').value = '';
+            new bootstrap.Modal(document.getElementById('addressModal')).show();
+        }
+
+        function editAddress(id) {
+            const addr = customerAddresses.find(a => a.id === id);
+            if (!addr) return;
+            editingAddressId = id;
+            document.getElementById('addressModalTitle').textContent = 'Sửa Địa Chỉ';
+            document.getElementById('addrName').value = addr.name || '';
+            document.getElementById('addrCity').value = addr.city || '';
+            document.getElementById('addrDistrict').value = addr.district || '';
+            document.getElementById('addrWard').value = addr.ward || '';
+            document.getElementById('addrDetail').value = addr.address_detail || '';
+            document.getElementById('addrPhone').value = addr.phone || '';
+            new bootstrap.Modal(document.getElementById('addressModal')).show();
+        }
+
+        async function saveAddress() {
+            const addr = {
+                name: document.getElementById('addrName').value,
+                city: document.getElementById('addrCity').value,
+                district: document.getElementById('addrDistrict').value,
+                ward: document.getElementById('addrWard').value,
+                address_detail: document.getElementById('addrDetail').value,
+                phone: document.getElementById('addrPhone').value
+            };
+
+            if (!addr.address_detail || !addr.city) {
+                alert('Vui lòng nhập địa chỉ và thành phố');
+                return;
+            }
+
+            try {
+                const method = editingAddressId ? 'PUT' : 'POST';
+                const url = editingAddressId 
+                    ? `${CUSTOMER_API_BASE}/${customerId}/addresses/${editingAddressId}`
+                    : `${CUSTOMER_API_BASE}/${customerId}/addresses/index.php`;
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(addr)
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('addressModal')).hide();
+                    loadAddresses();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Lưu địa chỉ thất bại');
+            }
+        }
+
+        async function deleteAddress(addrId) {
+            if (confirm('Bạn chắc chắn muốn xóa?')) {
+                try {
+                    const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/addresses/${addrId}`, {
+                        method: 'DELETE'
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        loadAddresses();
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        }
+
+        async function setDefaultAddress(addrId) {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/addresses/${addrId}/set-default.php`, {
+                    method: 'POST'
+                });
+                const result = await res.json();
+                if (result.success) {
+                    loadAddresses();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function removeFromWishlist(productDetailId) {
+            try {
+                const res = await fetch(`${CUSTOMER_API_BASE}/${customerId}/wishlist/remove.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_detail_id: productDetailId })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    loadWishlist();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function switchSection(section) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+            event.target.closest('.sidebar-item').classList.add('active');
+        }
+
+        function logout() {
+            if (confirm('Bạn chắc chắn muốn thoát?')) {
+                localStorage.removeItem('customer_id');
+                localStorage.removeItem('customer_info');
+                window.location.href = '/';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
